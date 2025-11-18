@@ -1,0 +1,99 @@
+
+   --------------------  General Information    -------------------- 
+
+Minor Version: 		0
+Major Version: 		52
+Constant Pool Count: 	14
+Access Flags: 		0x0600
+This Class: 		cp_info#1
+Super Class: 		cp_info#2
+Interfaces Count: 	0
+Fields Count: 		1
+Methods Count: 		1
+Atributes Count: 	1
+
+
+   --------------------  Constant Pool   --------------------  
+
+>>> [01] CONSTANT_Class_Info
+Class Name:	cp_info#12 <Somar>
+>>> [02] CONSTANT_Class_Info
+Class Name:	cp_info#13 <java/lang/Object>
+>>> [03] CONSTANT_Utf8_Info
+Length of byte array:	2
+Length of string:	2
+String:			pi
+>>> [04] CONSTANT_Utf8_Info
+Length of byte array:	1
+Length of string:	1
+String:			D
+>>> [05] CONSTANT_Utf8_Info
+Length of byte array:	13
+Length of string:	13
+String:			ConstantValue
+>>> [06] CONSTANT_Double_Info
+Double High Bytes:	0x400921ca
+Double Low Bytes:	0xc083126f
+Double:			3.14
+>>> [07] <unknown tag>
+
+>>> [08] CONSTANT_Utf8_Info
+Length of byte array:	5
+Length of string:	5
+String:			somar
+>>> [09] CONSTANT_Utf8_Info
+Length of byte array:	5
+Length of string:	5
+String:			(II)I
+>>> [10] CONSTANT_Utf8_Info
+Length of byte array:	10
+Length of string:	10
+String:			SourceFile
+>>> [11] CONSTANT_Utf8_Info
+Length of byte array:	10
+Length of string:	10
+String:			somar.java
+>>> [12] CONSTANT_Utf8_Info
+Length of byte array:	5
+Length of string:	5
+String:			Somar
+>>> [13] CONSTANT_Utf8_Info
+Length of byte array:	16
+Length of string:	16
+String:			java/lang/Object
+
+
+   --------------------  Interfaces     --------------------
+
+
+
+   --------------------  Fields   --------------------  
+
+>>> [0] Field 
+Name: 				cp_info#3 <pi>
+Descriptor: 		cp_info#4 <D>
+Access Flags: 		0x0019 [PUBLIC; STATIC; FINAL; ]
+Attributes Count:		1
+
+Attribute Name Index: 	cp_info#5 <ConstantValue>
+Attribute Length: 		2
+Constant Value Index: 		cp_info#6 <3.141500>
+
+
+   --------------------   Methods    -------------------- 
+
+[>>> [0] Method
+
+Name: 			cp_info#8 <somar>
+Descriptor: 		cp_info#9 <(II)I>
+Access Flags: 		0x0401 [PUBLIC; ABSTRACT; ]
+
+Attributes Count: 	0
+
+
+
+     Attributes     
+
+Attribute Name Index:		cp_info#10 <SourceFile>
+Attribute Length:		2
+Source File Name Index:		cp_info#11 <somar.java>
