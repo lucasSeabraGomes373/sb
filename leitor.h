@@ -52,4 +52,5 @@ char* decodeAccessFlags(byte2 flag);
 void printClassFile(ClassFile *, FILE *);                                           // Imprime o arquivo .class
 void freeInstructions(instruction *instrucoes);
 void freeConstantPool(cp_info *cp, byte2 count);
+void freeMethod(method_info method);
 #endif
