@@ -30,8 +30,10 @@ char* decodeInstructionOp(cp_info *cp,byte2 index, byte2 sizeCP){
 
 				strcpy(retorno,"<");
 				strcat(retorno,stringNomeClasse);
+				free(stringNomeClasse);
 				strcat(retorno,".");
 				strcat(retorno,stringNomeMetodo);
+				free(stringNomeMetodo);
 				strcat(retorno,">");
 				break;
 
@@ -45,8 +47,10 @@ char* decodeInstructionOp(cp_info *cp,byte2 index, byte2 sizeCP){
 
 				strcpy(retorno,"<");
 				strcat(retorno,stringNomeClasse);
+				free(stringNomeClasse);
 				strcat(retorno,".");
 				strcat(retorno,stringGeral);
+				free(stringGeral);
 				strcat(retorno,">");
 				break;
 
@@ -56,6 +60,7 @@ char* decodeInstructionOp(cp_info *cp,byte2 index, byte2 sizeCP){
 
 				strcpy(retorno,"<");
 				strcat(retorno,stringGeral);
+				free(stringGeral);
 				strcat(retorno,">");
 				break;
 			default:
