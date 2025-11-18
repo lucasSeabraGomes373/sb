@@ -20,8 +20,10 @@ void exec_iadd(Frame *frame) {
 }
 
 void exec_return(Frame *frame) {
-    frame->pc = frame->code_length; // Finaliza execução
+    // Uma forma segura de encerrar: zera o PC ou define um flag externo
+    frame->pc = -1;  // ou use algum valor especial para indicar fim
 }
+
 
 // ---------------------- Inicialização ----------------------
 
@@ -37,16 +39,19 @@ void inicializarInstrucoes(void) {
 
 // ---------------------- Loop de execução ----------------------
 
-void executar(Frame *frame) {
-    while (frame->pc < frame->code_length) {
+void executar(Frame *frame, int code_length) {
+    while (frame->pc >= 0 && frame->pc < code_length) {
         byte1 opcode = frame->code[frame->pc++];
         InstrucaoFunc func = instrucoes_exec[opcode];
         if (func) {
             func(frame);
         } else {
-            printf("Instrução %02x não implementada\n", opcode);
+            printf("Instrução 0x%02X não implementada\n", opcode);
             break;
         }
     }
 }
+
+
+
 
