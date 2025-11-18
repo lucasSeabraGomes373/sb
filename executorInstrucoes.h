@@ -5,7 +5,7 @@
 #ifndef EXECUTOR_INSTRUCOES_H
 #define EXECUTOR_INSTRUCOES_H
 
-#include "frame.h"
+#include "frames.h"
 #include "catalogoCodigosInstrucoes.h"
 
 // Tipo de função para execução de instruções
@@ -18,7 +18,7 @@ extern InstrucaoFunc instrucoes_exec[256];
 void inicializarInstrucoes(void);
 
 // Executa o loop principal de instruções de um frame
-void executar(Frame *frame);
+void executar(Frame *frame, int code_length) ;
 
 #endif // EXECUTOR_INSTRUCOES_H
 
