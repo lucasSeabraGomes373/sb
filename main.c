@@ -5,11 +5,69 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "leitor.h"
+#include "executorInstrucoes.h"  // para inicializarInstrucoes e executar
+#include "frames.h"               // para Frame
+#include "metodoInstrucoes.h"          // para enum de opcodes
 
-// Função placeholder para execução da JVM
+
+
+
+
+
 void executarJVM(ClassFile *classFile) {
-    printf("Execução da JVM ainda não implementada.\n");
+    inicializarInstrucoes();
+
+    for (int i = 0; i < classFile->methods_count; i++) {
+        method_info method = classFile->methods[i];
+
+        char *methodName = getUtf8FromConstantPool(classFile->constant_pool, method.name_index, classFile->constant_pool_count);
+        if (methodName && strcmp(methodName, "main") == 0) {
+            for (int j = 0; j < method.attributes_count; j++) {
+                attribute_info *attr = method.attributes[j];
+                char *attrName = getUtf8FromConstantPool(classFile->constant_pool, attr->attribute_name_index, classFile->constant_pool_count);
+                if (attrName && strcmp(attrName, "Code") == 0) {
+                    code_attribute *codeAttr = (code_attribute *)attr->info;
+
+                    // Aloca pilha e variáveis locais dinamicamente
+                    Frame frame;
+                    frame.pc = 0;
+                    frame.code = codeAttr->code;
+                    frame.max_stack = codeAttr->max_stack;
+                    frame.max_locals = codeAttr->max_locals;
+                    frame.sp = -1;
+
+                    frame.operand_stack = malloc(sizeof(int) * frame.max_stack);
+                    frame.local_variables = malloc(sizeof(int) * frame.max_locals);
+
+                    if (!frame.operand_stack || !frame.local_variables) {
+                        fprintf(stderr, "Erro ao alocar memória para o frame.\n");
+                        exit(1);
+                    }
+
+                    memset(frame.operand_stack, 0, sizeof(int) * frame.max_stack);
+                    memset(frame.local_variables, 0, sizeof(int) * frame.max_locals);
+
+                    printf("\n--- Iniciando execução do método main ---\n");
+                    executar(&frame, codeAttr->code_length);
+                    printf("--- Execução finalizada ---\n");
+
+                    free(frame.operand_stack);
+                    free(frame.local_variables);
+                    free(attrName);
+                    break;
+                }
+                if (attrName) free(attrName);
+            }
+            free(methodName);
+            return;
+        }
+        if (methodName) free(methodName);
+    }
+
+    printf("Método main não encontrado.\n");
 }
+
+
 
 int main() {
     int quantidadeArquivos;
@@ -57,10 +115,10 @@ int main() {
         } else {
             printf("Opção inválida.\n");
         }
-
         for (int i = 0; i < classFile->methods_count; i++) {
             freeMethod(classFile->methods[i]);
         }
+        free(classFile->methods);
         freeConstantPool(classFile->constant_pool, classFile->constant_pool_count);
         free(classFile);
     }
