@@ -13,6 +13,7 @@ void decodeExceptionsAttribute(FILE *fp, exceptions_attribute *excpAux, cp_info 
     for (byte2 *indexExcp = excpAux->exception_index_table; indexExcp < excpAux->exception_index_table + excpAux->number_of_exceptions; indexExcp++) {
         exceptionIndexString = decodeNIeNT(constant_pool, *indexExcp, 1);
         fprintf(fp, "%d    cp_info#%d      %s\n", contadorExcp, *indexExcp, exceptionIndexString);
+        free(exceptionIndexString);
         contadorExcp++;
     }
 }
@@ -37,6 +38,9 @@ void decodeInnerClassesAttribute(FILE *fp, innerClasses_attribute *innerC, cp_in
         accessFlagsInner = decodeAccessFlags((*(vetorClasses + posicaoInncerC))->inner_class_access_flags);
         fprintf(fp, "%d    cp_info#%d      cp_info#%d    cp_info#%d    0x%04x\n", posicaoInncerC, (*(vetorClasses + posicaoInncerC))->inner_class_info_index, (*(vetorClasses + posicaoInncerC))->outer_class_info_index, (*(vetorClasses + posicaoInncerC))->inner_name_index, (*(vetorClasses + posicaoInncerC))->inner_class_access_flags);
         fprintf(fp, "      %s    %s    %s      %s\n", innerClassString, outerClassString, innerNameIndex, accessFlagsInner);
+        free(innerClassString);
+        free(outerClassString);
+        free(innerNameIndex);
+        free(accessFlagsInner);
     }
-    free(accessFlagsInner);
 }
