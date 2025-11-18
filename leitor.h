@@ -53,4 +53,5 @@ void printClassFile(ClassFile *, FILE *);                                       
 void freeInstructions(instruction *instrucoes);
 void freeConstantPool(cp_info *cp, byte2 count);
 void freeMethod(method_info method);
+char* getUtf8FromConstantPool(cp_info *cp, byte2 index, byte2 sizeCP) ;
 #endif

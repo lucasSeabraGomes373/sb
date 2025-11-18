@@ -26,5 +26,3 @@ typedef struct {
 
 #endif // FRAME_H
 
-
-
