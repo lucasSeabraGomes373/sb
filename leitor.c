@@ -200,7 +200,6 @@ char* decodeCode(cp_info *cp, byte2 sizeCP, byte1 *code, byte4 length, instructi
 
     int offset = 0;  // posição atual de escrita
     byte2 *aux2;
-    char stringaux[100];
     char *stringargs;
     char *stringdecod;
 
