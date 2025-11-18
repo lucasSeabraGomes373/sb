@@ -193,60 +193,56 @@ method_info * readMethod (FILE * fp, byte2 methods_count, cp_info *cp) {
 	return methods;
 }
 
-char* decodeCode(cp_info *cp, byte2 sizeCP, byte1 *code, byte4 length,instruction *instrucoes){
-	byte1 *aux;
+char* decodeCode(cp_info *cp, byte2 sizeCP, byte1 *code, byte4 length, instruction *instrucoes) {
+    byte1 *aux;
+    char *retorno = malloc(5000);  // aumentamos o buffer para comportar mais instruções
+    if (!retorno) return NULL;
 
-	char *retorno = (char*)malloc(1000*sizeof(char));
-	char *stringaux = (char*)malloc(100*sizeof(char));
-	byte2 *aux2;
-	char *stringargs;
-	char *stringdecod;
-		strcpy(retorno,"");
+    int offset = 0;  // posição atual de escrita
+    byte2 *aux2;
+    char stringaux[100];
+    char *stringargs;
+    char *stringdecod;
 
-	for(aux=code;aux<code+length;){
-		int numarg = instrucoes[*aux].numarg;
-		strcat(retorno,instrucoes[*aux].instr_name);
-		switch(numarg){
-			case 0:
-				strcat(retorno,"\n");
-				aux++;
-			break;
-			case 1:
-				strcat(retorno," #");
-				sprintf(stringaux,"%d",*(++aux));
-				strcat(retorno,stringaux);
-				strcat(retorno," ");
-				stringdecod = decodeInstructionOp(cp,*aux,sizeCP);
-				strcat(retorno,stringdecod);
-				strcat(retorno,"\n");
-				aux++;
-			break;
+    for (aux = code; aux < code + length;) {
+        byte1 opcode = *aux;
+        int numarg = instrucoes[opcode].numarg;
 
-			case 2:
-				aux2 = (byte2*)malloc(sizeof(byte2));
-				*aux2 = *(++aux) << 8;
-				*aux2 |= *(++aux);
-			stringargs = decodeInstructionOp(cp,*aux2,sizeCP);
-				strcat(retorno," #");
-				sprintf(stringaux,"%d",(int)*aux2);
-				strcat(retorno,stringaux);
-				strcat(retorno," ");
-				strcat(retorno,stringargs);
-				strcat(retorno,"\n");
-				aux++;
-			break;
+        // escreve o nome da instrução
+        offset += snprintf(retorno + offset, 5000 - offset, "%s", instrucoes[opcode].instr_name);
+        aux++;
 
-			default:
-				strcat(retorno,"undefined");
-				aux++;
-			break;
+        switch (numarg) {
+            case 0:
+                offset += snprintf(retorno + offset, 5000 - offset, "\n");
+                break;
 
-		}
-	}
-	free(stringargs);
-	free(aux2);
-	return(retorno);
+            case 1:
+                offset += snprintf(retorno + offset, 5000 - offset, " #%d ", *aux);
+                stringdecod = decodeInstructionOp(cp, *aux, sizeCP);
+                offset += snprintf(retorno + offset, 5000 - offset, "%s\n", stringdecod);
+                aux++;
+                break;
+
+            case 2:
+                aux2 = malloc(sizeof(byte2));
+                *aux2 = (*aux << 8) | *(aux + 1);
+                stringargs = decodeInstructionOp(cp, *aux2, sizeCP);
+                offset += snprintf(retorno + offset, 5000 - offset, " #%d %s\n", *aux2, stringargs);
+                aux += 2;
+                free(aux2);
+                break;
+
+            default:
+                offset += snprintf(retorno + offset, 5000 - offset, " undefined\n");
+                break;
+        }
+    }
+
+    return retorno;
 }
+
+
 
 code_attribute * readCode (FILE * fp, cp_info *cp) {
 	code_attribute * code_attributes = NULL;
