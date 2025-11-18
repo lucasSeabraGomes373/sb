@@ -235,7 +235,7 @@ char* decodeCode(cp_info *cp, byte2 sizeCP, byte1 *code, byte4 length, instructi
                 offset += snprintf(retorno + offset, capacidade - offset, " #%d ", *aux);
                 stringdecod = decodeInstructionOp(cp, *aux, sizeCP);
                 offset += snprintf(retorno + offset, capacidade - offset, "%s\n", stringdecod);
-				free(stringdecod);
+                free(stringdecod);
                 aux++;
                 break;
 
@@ -244,7 +244,7 @@ char* decodeCode(cp_info *cp, byte2 sizeCP, byte1 *code, byte4 length, instructi
                 *aux2 = (*aux << 8) | *(aux + 1);
                 stringargs = decodeInstructionOp(cp, *aux2, sizeCP);
                 offset += snprintf(retorno + offset, capacidade - offset, " #%d %s\n", *aux2, stringargs);
-				free(stringargs);
+                free(stringargs);
                 aux += 2;
                 free(aux2);
                 break;
@@ -258,6 +258,7 @@ char* decodeCode(cp_info *cp, byte2 sizeCP, byte1 *code, byte4 length, instructi
     retorno[offset] = '\0';
     return retorno;
 }
+
 
 
 char* getUtf8FromConstantPool(cp_info *cp, byte2 index, byte2 sizeCP) {
@@ -291,6 +292,13 @@ void freeMethod(method_info method) {
         free(method.attributes);
     }
 }
+
+
+
+
+
+
+
 
 code_attribute * readCode (FILE * fp, cp_info *cp) {
 	code_attribute * code_attributes = NULL;
