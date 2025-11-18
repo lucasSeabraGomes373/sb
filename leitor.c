@@ -6,6 +6,8 @@
 #include <string.h>
 #include <math.h>
 #include "metodoInstrucoes.h"
+#include "constantPoolDecoding.h"
+
 
 
 byte1 byte1Read(FILE *fp){
