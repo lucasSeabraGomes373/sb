@@ -57,7 +57,10 @@ int main() {
         } else {
             printf("Opção inválida.\n");
         }
-
+for (int i = 0; i < classFile->methods_count; i++) {
+    freeMethod(classFile->methods[i]);
+}
+free(classFile->methods);
         freeConstantPool(classFile->constant_pool, classFile->constant_pool_count);
         free(classFile);
     }
