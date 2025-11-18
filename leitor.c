@@ -193,12 +193,16 @@ method_info * readMethod (FILE * fp, byte2 methods_count, cp_info *cp) {
 	return methods;
 }
 
+#define RETORNO_INICIAL 1024
+#define RETORNO_INCREMENTO 512
+
 char* decodeCode(cp_info *cp, byte2 sizeCP, byte1 *code, byte4 length, instruction *instrucoes) {
     byte1 *aux;
-    char *retorno = malloc(5000);  // aumentamos o buffer para comportar mais instruções
+    int capacidade = RETORNO_INICIAL;
+    char *retorno = malloc(capacidade);
     if (!retorno) return NULL;
 
-    int offset = 0;  // posição atual de escrita
+    int offset = 0;
     byte2 *aux2;
     char *stringargs;
     char *stringdecod;
@@ -207,19 +211,30 @@ char* decodeCode(cp_info *cp, byte2 sizeCP, byte1 *code, byte4 length, instructi
         byte1 opcode = *aux;
         int numarg = instrucoes[opcode].numarg;
 
-        // escreve o nome da instrução
-        offset += snprintf(retorno + offset, 5000 - offset, "%s", instrucoes[opcode].instr_name);
+        // Estimar espaço necessário para a próxima instrução
+        int espaco_necessario = 128;
+        if (offset + espaco_necessario >= capacidade) {
+            capacidade += RETORNO_INCREMENTO;
+            char *novo = realloc(retorno, capacidade);
+            if (!novo) {
+                free(retorno);
+                return NULL;
+            }
+            retorno = novo;
+        }
+
+        offset += snprintf(retorno + offset, capacidade - offset, "%s", instrucoes[opcode].instr_name);
         aux++;
 
         switch (numarg) {
             case 0:
-                offset += snprintf(retorno + offset, 5000 - offset, "\n");
+                offset += snprintf(retorno + offset, capacidade - offset, "\n");
                 break;
 
             case 1:
-                offset += snprintf(retorno + offset, 5000 - offset, " #%d ", *aux);
+                offset += snprintf(retorno + offset, capacidade - offset, " #%d ", *aux);
                 stringdecod = decodeInstructionOp(cp, *aux, sizeCP);
-                offset += snprintf(retorno + offset, 5000 - offset, "%s\n", stringdecod);
+                offset += snprintf(retorno + offset, capacidade - offset, "%s\n", stringdecod);
                 aux++;
                 break;
 
@@ -227,19 +242,22 @@ char* decodeCode(cp_info *cp, byte2 sizeCP, byte1 *code, byte4 length, instructi
                 aux2 = malloc(sizeof(byte2));
                 *aux2 = (*aux << 8) | *(aux + 1);
                 stringargs = decodeInstructionOp(cp, *aux2, sizeCP);
-                offset += snprintf(retorno + offset, 5000 - offset, " #%d %s\n", *aux2, stringargs);
+                offset += snprintf(retorno + offset, capacidade - offset, " #%d %s\n", *aux2, stringargs);
                 aux += 2;
                 free(aux2);
                 break;
 
             default:
-                offset += snprintf(retorno + offset, 5000 - offset, " undefined\n");
+                offset += snprintf(retorno + offset, capacidade - offset, " undefined\n");
                 break;
         }
     }
 
+    retorno[offset] = '\0';
     return retorno;
 }
+
+
 
 
 
