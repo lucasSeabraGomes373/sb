@@ -263,6 +263,21 @@ char* decodeCode(cp_info *cp, byte2 sizeCP, byte1 *code, byte4 length, instructi
 
 
 
+void freeMethod(method_info method) {
+    for (int i = 0; i < method.attributes_count; i++) {
+        if (method.attributes[i] != NULL) {
+            if (method.attributes[i]->info != NULL) {
+                free(method.attributes[i]->info);
+            }
+            free(method.attributes[i]);  // ← libera o próprio atributo
+        }
+    }
+    if (method.attributes != NULL) {
+        free(method.attributes);  // ← libera o vetor de ponteiros
+    }
+}
+
+
 code_attribute * readCode (FILE * fp, cp_info *cp) {
 	code_attribute * code_attributes = NULL;
 	code_attributes = (code_attribute*) malloc(sizeof(code_attribute));
