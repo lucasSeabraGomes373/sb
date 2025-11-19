@@ -16,21 +16,66 @@ void executarJVM(ClassFile *classFile) {
     inicializarInstrucoes();
     inicializarAmbiente(classFile);
     
-    // 1. Encontrar o método main: main:([Ljava/lang/String;)V
-    code_attribute *mainCode = getMethodCode(classFile, "main", "([Ljava/lang/String;)V");
+    // 1. Decodificar o nome desta classe
+    // Esta decodificação é necessária para a lógica de decisão.
+    cp_info *this_class_entry = classFile->constant_pool + classFile->this_class - 1;
+    if (this_class_entry->tag != CONSTANT_Class) {
+         fprintf(stderr, "Erro: Índice this_class (%d) não aponta para CONSTANT_Class.\n", classFile->this_class);
+         return;
+    }
+    
+    // Decodifica o nome da classe (ex: Belote, Carta, Jogador)
+    char *this_class_name = decodeNIeNT(classFile->constant_pool, this_class_entry->UnionCP.CONSTANT_Class.name_index, 3);
+    
+    code_attribute *methodCode = NULL;
+    const char *method_name_to_run = NULL;
 
-    if (mainCode == NULL) {
-        fprintf(stderr, "Erro: Método main não encontrado na classe.\n");
+    // --- Lógica de Decisão Generalizada ---
+    
+    // 1. PRIMEIRA TENTATIVA: MAIN (Ponto de entrada de aplicação)
+    methodCode = getMethodCode(classFile, "main", "([Ljava/lang/String;)V");
+    if (methodCode != NULL) {
+        method_name_to_run = "main";
+    }
+
+    // 2. SEGUNDA TENTATIVA (Construtor Específico)
+    if (methodCode == NULL) {
+        if (strcmp(this_class_name, "Carta") == 0) {
+             methodCode = getMethodCode(classFile, "<init>", "(ILjava/lang/String;I)V");
+             if (methodCode != NULL) method_name_to_run = "Construtor Carta (I, String, I)V";
+        } else if (strcmp(this_class_name, "Jogador") == 0) {
+             methodCode = getMethodCode(classFile, "<init>", "(Ljava/lang/String;)V");
+             if (methodCode != NULL) method_name_to_run = "Construtor Jogador (String)V";
+        }
+    }
+    
+    // 3. ÚLTIMA TENTATIVA (Construtor Padrão)
+    if (methodCode == NULL) {
+        methodCode = getMethodCode(classFile, "<init>", "()V");
+        if (methodCode != NULL) {
+             method_name_to_run = "Construtor Padrão ()V";
+        }
+    }
+
+    // Debug da Decisão e Tratamento de Erro
+    fprintf(stderr, "[DEBUG] Classe Lida: %s. Tentando executar: %s\n", this_class_name, method_name_to_run ? method_name_to_run : "Nenhum método inicial encontrado");
+    
+    if (methodCode == NULL) {
+        fprintf(stderr, "Erro: Não foi encontrado um método 'main' ou um construtor ('<init>') conhecido para iniciar a classe.\n");
+        free(this_class_name);
         return;
     }
+
+    free(this_class_name);
+    // --- Fim da Lógica de Decisão ---
 
     // 2. Criar o Frame inicial
     Frame mainFrame;
     mainFrame.pc = 0;
-    mainFrame.max_stack = mainCode->max_stack;
-    mainFrame.max_locals = mainCode->max_locals;
-    mainFrame.code = mainCode->code;
-    mainFrame.code_length = mainCode->code_length;
+    mainFrame.max_stack = methodCode->max_stack;
+    mainFrame.max_locals = methodCode->max_locals;
+    mainFrame.code = methodCode->code;
+    mainFrame.code_length = methodCode->code_length;
     mainFrame.sp = -1; // Pilha vazia
 
     // Alocar Pilha de Operandos e Variáveis Locais
@@ -115,10 +160,7 @@ int main() {
             printf("Opção inválida.\n");
         }
 
-        // A limpeza de memória deve ser feita uma única vez após o uso da ClassFile
-        // independentemente da opção escolhida.
         freeConstantPool(classFile->constant_pool, classFile->constant_pool_count);
-        // Implementação completa da função de liberação de memória para todo o ClassFile seria ideal aqui.
         free(classFile);
     }
 

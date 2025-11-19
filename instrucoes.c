@@ -841,9 +841,9 @@ instruction* InstructionBuild(void){
 				instructions[i].opcode = if_icmple;
 				instructions[i].numarg = 2;
 			break;
-			case if_acmpeg:
+			case if_acmpeq:
 				strcpy(instructions[i].instr_name,"if_acmpeg");
-				instructions[i].opcode = if_acmpeg;
+				instructions[i].opcode = if_acmpeq;
 				instructions[i].numarg = 2;
 			break;
 			case if_acmpne:
