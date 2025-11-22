@@ -103,6 +103,8 @@ void executarJVM(ClassFile *classFile) {
     free(mainFrame.local_variables);
 }
 
+
+
 int main() {
     int quantidadeArquivos;
     char nomeArquivo[256];
