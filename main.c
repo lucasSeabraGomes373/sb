@@ -5,66 +5,102 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "leitor.h"
-#include "executorInstrucoes.h"  // para inicializarInstrucoes e executar
-#include "frames.h"               // para Frame
-#include "metodoInstrucoes.h"          // para enum de opcodes
-
-
-
-
+#include "executorInstrucoes.h"
+#include "frames.h"
+#include "attributeStructs.h"
 
 
 void executarJVM(ClassFile *classFile) {
+    
+    // Inicialização do Ambiente
     inicializarInstrucoes();
+    inicializarAmbiente(classFile);
+    
+    // 1. Decodificar o nome desta classe
+    // Esta decodificação é necessária para a lógica de decisão.
+    cp_info *this_class_entry = classFile->constant_pool + classFile->this_class - 1;
+    if (this_class_entry->tag != CONSTANT_Class) {
+         fprintf(stderr, "Erro: Índice this_class (%d) não aponta para CONSTANT_Class.\n", classFile->this_class);
+         return;
+    }
+    
+    // Decodifica o nome da classe (ex: Belote, Carta, Jogador)
+    char *this_class_name = decodeNIeNT(classFile->constant_pool, this_class_entry->UnionCP.CONSTANT_Class.name_index, 3);
+    
+    code_attribute *methodCode = NULL;
+    const char *method_name_to_run = NULL;
 
-    for (int i = 0; i < classFile->methods_count; i++) {
-        method_info method = classFile->methods[i];
-
-        char *methodName = getUtf8FromConstantPool(classFile->constant_pool, method.name_index, classFile->constant_pool_count);
-        if (methodName && strcmp(methodName, "main") == 0) {
-            for (int j = 0; j < method.attributes_count; j++) {
-                attribute_info *attr = method.attributes[j];
-                char *attrName = getUtf8FromConstantPool(classFile->constant_pool, attr->attribute_name_index, classFile->constant_pool_count);
-                if (attrName && strcmp(attrName, "Code") == 0) {
-                    code_attribute *codeAttr = (code_attribute *)attr->info;
-
-                    // Aloca pilha e variáveis locais dinamicamente
-                    Frame frame;
-                    frame.pc = 0;
-                    frame.code = codeAttr->code;
-                    frame.max_stack = codeAttr->max_stack;
-                    frame.max_locals = codeAttr->max_locals;
-                    frame.sp = -1;
-
-                    frame.operand_stack = malloc(sizeof(int) * frame.max_stack);
-                    frame.local_variables = malloc(sizeof(int) * frame.max_locals);
-
-                    if (!frame.operand_stack || !frame.local_variables) {
-                        fprintf(stderr, "Erro ao alocar memória para o frame.\n");
-                        exit(1);
-                    }
-
-                    memset(frame.operand_stack, 0, sizeof(int) * frame.max_stack);
-                    memset(frame.local_variables, 0, sizeof(int) * frame.max_locals);
-
-                    printf("\n--- Iniciando execução do método main ---\n");
-                    executar(&frame, codeAttr->code_length);
-                    printf("--- Execução finalizada ---\n");
-
-                    free(frame.operand_stack);
-                    free(frame.local_variables);
-                    free(attrName);
-                    break;
-                }
-                if (attrName) free(attrName);
-            }
-            free(methodName);
-            return;
-        }
-        if (methodName) free(methodName);
+    // --- Lógica de Decisão Generalizada ---
+    
+    // 1. PRIMEIRA TENTATIVA: MAIN (Ponto de entrada de aplicação)
+    methodCode = getMethodCode(classFile, "main", "([Ljava/lang/String;)V");
+    if (methodCode != NULL) {
+        method_name_to_run = "main";
     }
 
-    printf("Método main não encontrado.\n");
+    // 2. SEGUNDA TENTATIVA (Construtor Específico)
+    if (methodCode == NULL) {
+        if (strcmp(this_class_name, "Carta") == 0) {
+             methodCode = getMethodCode(classFile, "<init>", "(ILjava/lang/String;I)V");
+             if (methodCode != NULL) method_name_to_run = "Construtor Carta (I, String, I)V";
+        } else if (strcmp(this_class_name, "Jogador") == 0) {
+             methodCode = getMethodCode(classFile, "<init>", "(Ljava/lang/String;)V");
+             if (methodCode != NULL) method_name_to_run = "Construtor Jogador (String)V";
+        }
+    }
+    
+    // 3. ÚLTIMA TENTATIVA (Construtor Padrão)
+    if (methodCode == NULL) {
+        methodCode = getMethodCode(classFile, "<init>", "()V");
+        if (methodCode != NULL) {
+             method_name_to_run = "Construtor Padrão ()V";
+        }
+    }
+
+    // Debug da Decisão e Tratamento de Erro
+    fprintf(stderr, "[DEBUG] Classe Lida: %s. Tentando executar: %s\n", this_class_name, method_name_to_run ? method_name_to_run : "Nenhum método inicial encontrado");
+    
+    if (methodCode == NULL) {
+        fprintf(stderr, "Erro: Não foi encontrado um método 'main' ou um construtor ('<init>') conhecido para iniciar a classe.\n");
+        free(this_class_name);
+        return;
+    }
+
+    free(this_class_name);
+    // --- Fim da Lógica de Decisão ---
+
+    // 2. Criar o Frame inicial
+    Frame mainFrame;
+    mainFrame.pc = 0;
+    mainFrame.max_stack = methodCode->max_stack;
+    mainFrame.max_locals = methodCode->max_locals;
+    mainFrame.code = methodCode->code;
+    mainFrame.code_length = methodCode->code_length;
+    mainFrame.sp = -1; // Pilha vazia
+
+    // Alocar Pilha de Operandos e Variáveis Locais
+    mainFrame.operand_stack = (int*)calloc(mainFrame.max_stack, sizeof(int));
+    mainFrame.local_variables = (int*)calloc(mainFrame.max_locals, sizeof(int));
+
+    if (!mainFrame.operand_stack || !mainFrame.local_variables) {
+         fprintf(stderr, "Erro: Falha na alocação de memória para o Frame.\n");
+         if (mainFrame.operand_stack) free(mainFrame.operand_stack);
+         if (mainFrame.local_variables) free(mainFrame.local_variables);
+         return;
+    }
+    
+    printf("--- Iniciando Execução do Método Main ---\n");
+    printf("Max Stack: %d, Max Locals: %d, Code Length: %d\n\n", 
+           mainFrame.max_stack, mainFrame.max_locals, mainFrame.code_length);
+
+    // 3. Iniciar o loop de execução
+    executar(&mainFrame);
+    
+    printf("\n--- Execução Concluída ---\n");
+
+    // 4. Limpeza
+    free(mainFrame.operand_stack);
+    free(mainFrame.local_variables);
 }
 
 
@@ -75,17 +111,26 @@ int main() {
     int opcao;
 
     printf("Digite a quantidade de arquivos a serem lidos: ");
-    scanf("%d", &quantidadeArquivos);
+    if (scanf("%d", &quantidadeArquivos) != 1) {
+        fprintf(stderr, "Erro na leitura da quantidade de arquivos.\n");
+        return 1;
+    }
 
     for (int i = 0; i < quantidadeArquivos; i++) {
         printf("\nDigite o nome do arquivo a ser lido (com extensão): ");
-        scanf("%s", nomeArquivo);
+        if (scanf("%s", nomeArquivo) != 1) {
+             fprintf(stderr, "Erro na leitura do nome do arquivo.\n");
+             continue;
+        }
 
         printf("Escolha a operação:\n");
         printf("1 - Imprimir em .txt\n");
         printf("2 - Executar como JVM\n");
         printf("Opção: ");
-        scanf("%d", &opcao);
+        if (scanf("%d", &opcao) != 1) {
+             fprintf(stderr, "Erro na leitura da opção.\n");
+             continue;
+        }
 
         ClassFile *classFile = readFile(nomeArquivo);
         if (classFile == NULL) {
@@ -103,6 +148,7 @@ int main() {
             FILE *saida = fopen(nomeSaida, "a");
             if (saida == NULL) {
                 fprintf(stderr, "Erro ao abrir o arquivo de saída.\n");
+                freeConstantPool(classFile->constant_pool, classFile->constant_pool_count);
                 free(classFile);
                 continue;
             }
@@ -115,14 +161,10 @@ int main() {
         } else {
             printf("Opção inválida.\n");
         }
-        for (int i = 0; i < classFile->methods_count; i++) {
-            freeMethod(classFile->methods[i]);
-        }
-        free(classFile->methods);
+
         freeConstantPool(classFile->constant_pool, classFile->constant_pool_count);
         free(classFile);
     }
 
     return 0;
 }
-

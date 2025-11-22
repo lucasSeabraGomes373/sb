@@ -1,5 +1,6 @@
 //
 // Created by lucas on 18/11/2025.
+// Updated by Henrique on 18/11/2025
 //
 
 #ifndef FRAME_H
@@ -13,6 +14,7 @@ typedef struct {
     byte4 pc;                  // Program counter (posição atual no bytecode)
     byte2 max_stack;           // Tamanho máximo da pilha de operandos
     byte2 max_locals;          // Tamanho máximo das variáveis locais
+    byte4 code_length;         // NOVO: Adicionado o tamanho total do bytecode
     byte1 *code;               // Bytecode do método
     int *operand_stack;        // Pilha de operandos
     int *local_variables;      // Vetor de variáveis locais
@@ -25,4 +27,3 @@ typedef struct {
 } Thread;
 
 #endif // FRAME_H
-
