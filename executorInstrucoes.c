@@ -52,6 +52,80 @@ void exec_return(Frame *frame) {
     printf("--- RETORNO do Método (RETURN) ---\n");
 }
 
+// Aritmeticas, sub , mult , div , resto , negação
+
+void exec_isub(Frame *frame) {
+    int v2 = pop_stack(frame);
+    int v1 = pop_stack(frame);
+    push_stack(frame, v1 - v2);
+}
+
+void exec_imul(Frame *frame) {
+    int v2 = pop_stack(frame);
+    int v1 = pop_stack(frame);
+    push_stack(frame, v1 * v2);
+}
+
+void exec_idiv(Frame *frame) {
+    int v2 = pop_stack(frame);
+    int v1 = pop_stack(frame);
+    if (v2 == 0) {
+        fprintf(stderr, "Erro: Divisão por zero \n");
+        exit(EXIT_FAILURE);
+        }
+    push_stack(frame, v1 / v2);
+}
+
+void exec_irem(Frame *frame) {
+    int v2 = pop_stack(frame);
+    int v1 = pop_stack(frame);
+    if (v2 == 0) {
+        fprintf(stderr, "Erro: Divisão por zero \n");
+        exit(EXIT_FAILURE);
+        }
+    push_stack(frame, v1 % v2);
+}
+
+void exec_ineg(Frame *frame) {
+    int v = pop_stack(frame);
+    push_stack(frame, -v);
+}
+
+// shift
+
+void exec_ishl(Frame *frame) {
+    int v2 = pop_stack(frame);
+    int v1 = pop_stack(frame);
+    push_stack(frame, v1 << (v2 & 0x1F)); // 5 bits inferiores
+}
+
+void exec_ishr(Frame *frame) {
+    int v2 = pop_stack(frame);
+    int v1 = pop_stack(frame);
+    push_stack(frame, v1 >> (v2 & 0x1F)); // 5 bits inferiores
+}
+
+void exec_iand(Frame *frame) {
+    int v2 = pop_stack(frame);
+    int v1 = pop_stack(frame);
+    push_stack(frame, v1 & v2);
+}
+
+void exec_ior(Frame *frame) {
+    int v2 = pop_stack(frame);
+    int v1 = pop_stack(frame);
+    push_stack(frame, v1 | v2);
+}
+
+void exec_ixor(Frame *frame) {
+    int v2 = pop_stack(frame);
+    int v1 = pop_stack(frame);
+    push_stack(frame, v1 ^ v2);
+}
+
+
+
+
 // ---------------------- NOVAS IMPLEMENTAÇÕES DE ACESSO LOCAL ----------------------
 
 // ALOAD_0 (0x2A) - Carrega a referência local 0 ('this')
@@ -294,6 +368,22 @@ void inicializarInstrucoes(void) {
     instrucoes_exec[iconst_0] = exec_iconst_0;
     instrucoes_exec[iadd] = exec_iadd;
     instrucoes_exec[inst_return] = exec_return;     
+
+    // Aritmeticas
+    instrucoes_exec[isub] = exec_isub;
+    instrucoes_exec[imul] = exec_imul;
+    instrucoes_exec[idiv] = exec_idiv;
+    instrucoes_exec[irem] = exec_irem;
+    instrucoes_exec[ineg] = exec_ineg;
+
+    // Shift
+
+    instrucoes_exec[ishl] = exec_ishl;
+    instrucoes_exec[ishr] = exec_ishr;
+    instrucoes_exec[iand] = exec_iand;
+    instrucoes_exec[ior] = exec_ior;
+    instrucoes_exec[ixor] = exec_ixor;
+
 
     // Acesso Local (para o construtor da Carta e outros)
     instrucoes_exec[aload_0] = exec_aload_0; 
