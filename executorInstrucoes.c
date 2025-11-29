@@ -123,6 +123,16 @@ void exec_ixor(Frame *frame) {
     push_stack(frame, v1 ^ v2);
 }
 
+void exec_iinc(Frame *frame) {
+    byte1 index = frame->code[frame->pc++];
+    byte1 const_val = frame->code[frame->pc++];
+    int increment = (signed char)const_val;
+    frame->local_variables[index] += increment; 
+
+}
+
+
+
 
 
 
@@ -157,6 +167,32 @@ void exec_istore_2(Frame *frame) {
 // ALOAD_3 (0x2D) - Carrega ref local 3
 void exec_aload_3(Frame *frame) {
     push_stack(frame, frame->local_variables[3]);
+}
+
+// 0x11 sipush
+
+void exec_sipush(Frame *frame) {
+    byte1 byte1 = frame->code[frame->pc++];
+    byte2 byte2 = frame->code[frame->pc++];
+    
+    short value = (short)((byte1 << 8) | byte2);
+    push_stack(frame, value);
+}
+
+//  Conversões 
+
+// 0x91
+void exec_i2b(Frame *frame) {
+    int v = pop_stack(frame);
+    push_stack(frame, (signed char)v);
+
+}
+
+// 0x93
+
+void exec_i2s(Frame *frame) {
+    int v = pop_stack(frame);
+    push_stack(frame, (short)v);
 }
 
 // ---------------------- CONTROLE DE OBJETOS E CAMPOS ----------------------
@@ -383,6 +419,16 @@ void inicializarInstrucoes(void) {
     instrucoes_exec[iand] = exec_iand;
     instrucoes_exec[ior] = exec_ior;
     instrucoes_exec[ixor] = exec_ixor;
+    instrucoes_exec[iinc] = exec_iinc;
+
+    // Conversões
+
+    instrucoes_exec[i2b] = exec_i2b;
+    instrucoes_exec[i2s] = exec_i2s;
+
+    // Sipush
+    instrucoes_exec[sipush] = exec_sipush;
+
 
 
     // Acesso Local (para o construtor da Carta e outros)
