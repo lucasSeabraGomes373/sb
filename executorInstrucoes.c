@@ -1,11 +1,14 @@
 //
 // Created by lucas on 18/11/2025.
 // Updated by Henrique on 18/11/2025
+// Updated by Marcelo on 29/11/2025
 //
 
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include "executorInstrucoes.h"
 #include "leitor.h" // Incluído para decodeStringUTF8, decodeIntegerInfo, etc.
 #include "catalogoCodigosInstrucoes.h" // Para os enums dos opcodes
@@ -33,6 +36,22 @@ void push_stack(Frame *frame, int value) {
         exit(EXIT_FAILURE);
     }
     frame->operand_stack[++frame->sp] = value;
+}
+
+// Helpers para valores de 64-bit (long/double) usando dois slots na pilha
+static void push_long(Frame *frame, int64_t value) {
+    int high = (int)(value >> 32);
+    int low = (int)(value & 0xFFFFFFFF);
+    // empilha high primeiro, depois low -- assim pop retorna low então high
+    push_stack(frame, high);
+    push_stack(frame, low);
+}
+
+static int64_t pop_long(Frame *frame) {
+    int low = pop_stack(frame);
+    int high = pop_stack(frame);
+    uint32_t lowu = (uint32_t)low;
+    return (((int64_t)high) << 32) | lowu;
 }
 
 // ---------------------- Implementações de Execução Básica ----------------------
@@ -89,6 +108,143 @@ void exec_irem(Frame *frame) {
 void exec_ineg(Frame *frame) {
     int v = pop_stack(frame);
     push_stack(frame, -v);
+}
+
+// ---------------------- Long (simulado como int32) ----------------------
+void exec_ladd(Frame *frame) {
+    int64_t v2 = pop_long(frame);
+    int64_t v1 = pop_long(frame);
+    push_long(frame, v1 + v2);
+}
+
+void exec_lsub(Frame *frame) {
+    int64_t v2 = pop_long(frame);
+    int64_t v1 = pop_long(frame);
+    push_long(frame, v1 - v2);
+}
+
+void exec_lmul(Frame *frame) {
+    int64_t v2 = pop_long(frame);
+    int64_t v1 = pop_long(frame);
+    push_long(frame, v1 * v2);
+}
+
+void exec_ldiv(Frame *frame) {
+    int64_t v2 = pop_long(frame);
+    int64_t v1 = pop_long(frame);
+    if (v2 == 0LL) {
+        fprintf(stderr, "Erro: Divisão por zero (ldiv)\n");
+        exit(EXIT_FAILURE);
+    }
+    push_long(frame, v1 / v2);
+}
+
+void exec_lrem(Frame *frame) {
+    int64_t v2 = pop_long(frame);
+    int64_t v1 = pop_long(frame);
+    if (v2 == 0LL) {
+        fprintf(stderr, "Erro: Divisão por zero (lrem)\n");
+        exit(EXIT_FAILURE);
+    }
+    push_long(frame, v1 % v2);
+}
+
+void exec_lneg(Frame *frame) {
+    int64_t v = pop_long(frame);
+    push_long(frame, -v);
+}
+
+// ---------------------- Float (armazenado em int bits) ----------------------
+static int float_to_intbits(float f) {
+    int i;
+    memcpy(&i, &f, sizeof(int));
+    return i;
+}
+
+static float intbits_to_float(int i) {
+    float f;
+    memcpy(&f, &i, sizeof(float));
+    return f;
+}
+
+void exec_fadd(Frame *frame) {
+    int iv2 = pop_stack(frame);
+    int iv1 = pop_stack(frame);
+    float v2 = intbits_to_float(iv2);
+    float v1 = intbits_to_float(iv1);
+    float r = v1 + v2;
+    push_stack(frame, float_to_intbits(r));
+}
+
+void exec_fsub(Frame *frame) {
+    int iv2 = pop_stack(frame);
+    int iv1 = pop_stack(frame);
+    float v2 = intbits_to_float(iv2);
+    float v1 = intbits_to_float(iv1);
+    float r = v1 - v2;
+    push_stack(frame, float_to_intbits(r));
+}
+
+void exec_fmul(Frame *frame) {
+    int iv2 = pop_stack(frame);
+    int iv1 = pop_stack(frame);
+    float v2 = intbits_to_float(iv2);
+    float v1 = intbits_to_float(iv1);
+    float r = v1 * v2;
+    push_stack(frame, float_to_intbits(r));
+}
+
+void exec_fdiv(Frame *frame) {
+    int iv2 = pop_stack(frame);
+    int iv1 = pop_stack(frame);
+    float v2 = intbits_to_float(iv2);
+    float v1 = intbits_to_float(iv1);
+    if (v2 == 0.0f) {
+        fprintf(stderr, "Erro: Divisão por zero (fdiv)\n");
+        exit(EXIT_FAILURE);
+    }
+    float r = v1 / v2;
+    push_stack(frame, float_to_intbits(r));
+}
+
+void exec_frem(Frame *frame) {
+    int iv2 = pop_stack(frame);
+    int iv1 = pop_stack(frame);
+    float v2 = intbits_to_float(iv2);
+    float v1 = intbits_to_float(iv1);
+    if (v2 == 0.0f) {
+        fprintf(stderr, "Erro: Divisão por zero (frem)\n");
+        exit(EXIT_FAILURE);
+    }
+    float r = fmodf(v1, v2);
+    push_stack(frame, float_to_intbits(r));
+}
+
+void exec_fneg(Frame *frame) {
+    int iv = pop_stack(frame);
+    float v = intbits_to_float(iv);
+    v = -v;
+    push_stack(frame, float_to_intbits(v));
+}
+
+// ldc2_w (long/double de 64-bit)
+void exec_ldc2_w(Frame *frame) {
+    byte2 index = (frame->code[frame->pc] << 8) | frame->code[frame->pc+1];
+    frame->pc += 2;
+
+    cp_info *cp_entry = GLOBAL_CP + index - 1;
+    if (cp_entry->tag == CONSTANT_Long) {
+        uint64_t v = decodeLongInfo(cp_entry);
+        push_long(frame, (int64_t)v);
+    } else if (cp_entry->tag == CONSTANT_Double) {
+        double d = decodeDoubleInfo(cp_entry);
+        int64_t bits;
+        memcpy(&bits, &d, sizeof(bits));
+        push_long(frame, bits);
+    } else {
+        fprintf(stderr, "Erro: LDC2_W para tag %d não suportada.\n", cp_entry->tag);
+        exit(EXIT_FAILURE);
+    }
 }
 
 // shift
@@ -411,6 +567,20 @@ void inicializarInstrucoes(void) {
     instrucoes_exec[idiv] = exec_idiv;
     instrucoes_exec[irem] = exec_irem;
     instrucoes_exec[ineg] = exec_ineg;
+    // Long (simulado)
+    instrucoes_exec[ladd] = exec_ladd;
+    instrucoes_exec[lsub] = exec_lsub;
+    instrucoes_exec[lmul] = exec_lmul;
+    instrucoes_exec[inst_ldiv] = exec_ldiv;
+    instrucoes_exec[lrem] = exec_lrem;
+    instrucoes_exec[lneg] = exec_lneg;
+    // Float
+    instrucoes_exec[fadd] = exec_fadd;
+    instrucoes_exec[fsub] = exec_fsub;
+    instrucoes_exec[fmul] = exec_fmul;
+    instrucoes_exec[fdiv] = exec_fdiv;
+    instrucoes_exec[frem] = exec_frem;
+    instrucoes_exec[fneg] = exec_fneg;
 
     // Shift
 
@@ -456,6 +626,7 @@ void inicializarInstrucoes(void) {
     
     // I/O
     instrucoes_exec[ldc] = exec_ldc;
+    instrucoes_exec[ldc2_w] = exec_ldc2_w;
     instrucoes_exec[getstatic] = exec_getstatic;
     instrucoes_exec[invokevirtual] = exec_invokevirtual;
     instrucoes_exec[invokespecial] = exec_invokespecial; 
