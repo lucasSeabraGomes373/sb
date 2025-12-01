@@ -54,6 +54,20 @@ static int64_t pop_long(Frame *frame) {
     return (((int64_t)high) << 32) | lowu;
 }
 
+// Helpers para double (usa os mesmos dois slots que long, mas interpreta como double)
+static void push_double(Frame *frame, double d) {
+    int64_t bits;
+    memcpy(&bits, &d, sizeof(bits));
+    push_long(frame, bits);
+}
+
+static double pop_double(Frame *frame) {
+    int64_t bits = pop_long(frame);
+    double d;
+    memcpy(&d, &bits, sizeof(d));
+    return d;
+}
+
 // ---------------------- Implementações de Execução Básica ----------------------
 
 void exec_iconst_0(Frame *frame) {
@@ -247,6 +261,75 @@ void exec_ldc2_w(Frame *frame) {
     }
 }
 
+// ---------------------- Double (64-bit) ----------------------
+void exec_dadd(Frame *frame) {
+    double v2 = pop_double(frame);
+    double v1 = pop_double(frame);
+    push_double(frame, v1 + v2);
+}
+
+void exec_dsub(Frame *frame) {
+    double v2 = pop_double(frame);
+    double v1 = pop_double(frame);
+    push_double(frame, v1 - v2);
+}
+
+void exec_dmul(Frame *frame) {
+    double v2 = pop_double(frame);
+    double v1 = pop_double(frame);
+    push_double(frame, v1 * v2);
+}
+
+void exec_ddiv(Frame *frame) {
+    double v2 = pop_double(frame);
+    double v1 = pop_double(frame);
+    // Conforme IEEE-754 e especificação JVM: divisão por zero em ponto flutuante
+    // produz +Inf/-Inf ou NaN, não lança exceção. Deixe a operação acontecer
+    // e confie no comportamento da aritmética de ponto flutuante do C.
+    push_double(frame, v1 / v2);
+}
+
+void exec_drem(Frame *frame) {
+    double v2 = pop_double(frame);
+    double v1 = pop_double(frame);
+    // JVM follows IEEE-754 semantics for floating-point remainder as well.
+    // fmod(x, 0.0) will produce NaN; do not abort the VM here.
+    double r = fmod(v1, v2);
+    push_double(frame, r);
+}
+
+void exec_dneg(Frame *frame) {
+    double v = pop_double(frame);
+    push_double(frame, -v);
+}
+
+void exec_dconst_0(Frame *frame) { push_double(frame, 0.0); }
+void exec_dconst_1(Frame *frame) { push_double(frame, 1.0); }
+
+void exec_dload(Frame *frame) {
+    byte1 index = frame->code[frame->pc++];
+    int high = frame->local_variables[index];
+    int low = frame->local_variables[index + 1];
+    uint32_t lowu = (uint32_t)low;
+    int64_t bits = (((int64_t)high) << 32) | lowu;
+    push_long(frame, bits);
+}
+void exec_dload_0(Frame *frame) { int high = frame->local_variables[0]; int low = frame->local_variables[1]; uint32_t lowu=(uint32_t)low; int64_t bits=(((int64_t)high)<<32)|lowu; push_long(frame,bits); }
+void exec_dload_1(Frame *frame) { int high = frame->local_variables[1]; int low = frame->local_variables[2]; uint32_t lowu=(uint32_t)low; int64_t bits=(((int64_t)high)<<32)|lowu; push_long(frame,bits); }
+void exec_dload_2(Frame *frame) { int high = frame->local_variables[2]; int low = frame->local_variables[3]; uint32_t lowu=(uint32_t)low; int64_t bits=(((int64_t)high)<<32)|lowu; push_long(frame,bits); }
+void exec_dload_3(Frame *frame) { int high = frame->local_variables[3]; int low = frame->local_variables[4]; uint32_t lowu=(uint32_t)low; int64_t bits=(((int64_t)high)<<32)|lowu; push_long(frame,bits); }
+
+void exec_dstore(Frame *frame) {
+    byte1 index = frame->code[frame->pc++];
+    int64_t bits = pop_long(frame);
+    frame->local_variables[index] = (int)(bits >> 32);
+    frame->local_variables[index + 1] = (int)(bits & 0xFFFFFFFF);
+}
+void exec_dstore_0(Frame *frame) { int64_t bits = pop_long(frame); frame->local_variables[0]=(int)(bits>>32); frame->local_variables[1]=(int)(bits&0xFFFFFFFF); }
+void exec_dstore_1(Frame *frame) { int64_t bits = pop_long(frame); frame->local_variables[1]=(int)(bits>>32); frame->local_variables[2]=(int)(bits&0xFFFFFFFF); }
+void exec_dstore_2(Frame *frame) { int64_t bits = pop_long(frame); frame->local_variables[2]=(int)(bits>>32); frame->local_variables[3]=(int)(bits&0xFFFFFFFF); }
+void exec_dstore_3(Frame *frame) { int64_t bits = pop_long(frame); frame->local_variables[3]=(int)(bits>>32); frame->local_variables[4]=(int)(bits&0xFFFFFFFF); }
+
 // shift
 
 void exec_ishl(Frame *frame) {
@@ -411,10 +494,86 @@ void exec_invokespecial(Frame *frame) {
 void exec_new(Frame *frame) {
     byte2 index = (frame->code[frame->pc] << 8) | frame->code[frame->pc+1];
     frame->pc += 2;
+    (void)index; // variável não utilizada intencionalmente (silencia warning)
     
     // Apenas empilha uma referência fictícia nova (ex: 2)
     push_stack(frame, 2); 
     printf("--- [NEW] Criando objeto simulado Ref: 2 ---\n");
+}
+
+// ---------------------- Long loads/stores ----------------------
+void exec_lconst_0(Frame *frame) {
+    push_long(frame, 0LL);
+}
+
+void exec_lconst_1(Frame *frame) {
+    push_long(frame, 1LL);
+}
+
+void exec_lload(Frame *frame) {
+    byte1 index = frame->code[frame->pc++];
+    int high = frame->local_variables[index];
+    int low = frame->local_variables[index + 1];
+    uint32_t lowu = (uint32_t)low;
+    int64_t val = (((int64_t)high) << 32) | lowu;
+    push_long(frame, val);
+}
+
+void exec_lload_0(Frame *frame) { /* load from index 0 */
+    int high = frame->local_variables[0];
+    int low = frame->local_variables[1];
+    uint32_t lowu = (uint32_t)low;
+    int64_t val = (((int64_t)high) << 32) | lowu;
+    push_long(frame, val);
+}
+void exec_lload_1(Frame *frame) { /* load from index 1 */
+    int high = frame->local_variables[1];
+    int low = frame->local_variables[2];
+    uint32_t lowu = (uint32_t)low;
+    int64_t val = (((int64_t)high) << 32) | lowu;
+    push_long(frame, val);
+}
+void exec_lload_2(Frame *frame) { /* load from index 2 */
+    int high = frame->local_variables[2];
+    int low = frame->local_variables[3];
+    uint32_t lowu = (uint32_t)low;
+    int64_t val = (((int64_t)high) << 32) | lowu;
+    push_long(frame, val);
+}
+void exec_lload_3(Frame *frame) { /* load from index 3 */
+    int high = frame->local_variables[3];
+    int low = frame->local_variables[4];
+    uint32_t lowu = (uint32_t)low;
+    int64_t val = (((int64_t)high) << 32) | lowu;
+    push_long(frame, val);
+}
+
+void exec_lstore(Frame *frame) {
+    byte1 index = frame->code[frame->pc++];
+    int64_t val = pop_long(frame);
+    frame->local_variables[index] = (int)(val >> 32);
+    frame->local_variables[index + 1] = (int)(val & 0xFFFFFFFF);
+}
+
+void exec_lstore_0(Frame *frame) {
+    int64_t val = pop_long(frame);
+    frame->local_variables[0] = (int)(val >> 32);
+    frame->local_variables[1] = (int)(val & 0xFFFFFFFF);
+}
+void exec_lstore_1(Frame *frame) {
+    int64_t val = pop_long(frame);
+    frame->local_variables[1] = (int)(val >> 32);
+    frame->local_variables[2] = (int)(val & 0xFFFFFFFF);
+}
+void exec_lstore_2(Frame *frame) {
+    int64_t val = pop_long(frame);
+    frame->local_variables[2] = (int)(val >> 32);
+    frame->local_variables[3] = (int)(val & 0xFFFFFFFF);
+}
+void exec_lstore_3(Frame *frame) {
+    int64_t val = pop_long(frame);
+    frame->local_variables[3] = (int)(val >> 32);
+    frame->local_variables[4] = (int)(val & 0xFFFFFFFF);
 }
 
 // ---------------------- NOVAS INSTRUÇÕES MÍNIMAS (I/O) ----------------------
@@ -606,6 +765,40 @@ void inicializarInstrucoes(void) {
     instrucoes_exec[aload_1] = exec_aload_1; 
     instrucoes_exec[aload_2] = exec_aload_2; 
     instrucoes_exec[aload_3] = exec_aload_3;
+
+    // Long constants / loads / stores
+    instrucoes_exec[lconst_0] = exec_lconst_0;
+    instrucoes_exec[lconst_1] = exec_lconst_1;
+    instrucoes_exec[lload] = exec_lload;
+    instrucoes_exec[lload_0] = exec_lload_0;
+    instrucoes_exec[lload_1] = exec_lload_1;
+    instrucoes_exec[lload_2] = exec_lload_2;
+    instrucoes_exec[lload_3] = exec_lload_3;
+    instrucoes_exec[lstore] = exec_lstore;
+    instrucoes_exec[lstore_0] = exec_lstore_0;
+    instrucoes_exec[lstore_1] = exec_lstore_1;
+    instrucoes_exec[lstore_2] = exec_lstore_2;
+    instrucoes_exec[lstore_3] = exec_lstore_3;
+
+    // Double instructions
+    instrucoes_exec[dadd] = exec_dadd;
+    instrucoes_exec[dsub] = exec_dsub;
+    instrucoes_exec[dmul] = exec_dmul;
+    instrucoes_exec[ddiv] = exec_ddiv;
+    instrucoes_exec[inst_drem] = exec_drem;
+    instrucoes_exec[dneg] = exec_dneg;
+    instrucoes_exec[dconst_0] = exec_dconst_0;
+    instrucoes_exec[dconst_1] = exec_dconst_1;
+    instrucoes_exec[dload] = exec_dload;
+    instrucoes_exec[dload_0] = exec_dload_0;
+    instrucoes_exec[dload_1] = exec_dload_1;
+    instrucoes_exec[dload_2] = exec_dload_2;
+    instrucoes_exec[dload_3] = exec_dload_3;
+    instrucoes_exec[dstore] = exec_dstore;
+    instrucoes_exec[dstore_0] = exec_dstore_0;
+    instrucoes_exec[dstore_1] = exec_dstore_1;
+    instrucoes_exec[dstore_2] = exec_dstore_2;
+    instrucoes_exec[dstore_3] = exec_dstore_3;
 
     instrucoes_exec[iload_0] = exec_iload_0;
     instrucoes_exec[iload_1] = exec_iload_1; 
