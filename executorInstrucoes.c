@@ -22,6 +22,22 @@ static byte2 GLOBAL_CP_COUNT = 0;
 typedef struct { int obj_ref; unsigned short field_index; int value; } HeapEntry;
 static HeapEntry HEAP_STORE[HEAP_STORE_CAP];
 static int HEAP_COUNT = 0;
+// Gerador simples de referências de objeto (inteiros únicos)
+static int NEXT_OBJ_REF = 3; // inicia em 3 para evitar colisão com valores "fictícios" antigos
+
+int create_object_ref(void) {
+    if (HEAP_COUNT >= HEAP_STORE_CAP) {
+        fprintf(stderr, "Erro: heap simulado cheio, não é possível criar novo objeto.\n");
+        exit(EXIT_FAILURE);
+    }
+    int ref = NEXT_OBJ_REF++;
+    // Cria uma entrada inicial no HEAP_STORE para a nova referência (valores padrões)
+    HEAP_STORE[HEAP_COUNT].obj_ref = ref;
+    HEAP_STORE[HEAP_COUNT].field_index = 0;
+    HEAP_STORE[HEAP_COUNT].value = 0;
+    HEAP_COUNT++;
+    return ref;
+}
 
 // Vetor global de ponteiros para funções
 InstrucaoFunc instrucoes_exec[256];
@@ -37,7 +53,10 @@ int pop_stack(Frame *frame) {
 }
 
 void push_stack(Frame *frame, int value) {
-    if (frame->sp >= frame->max_stack + 32) {  // Increased tolerance for stack overflow
+    // Ensure we don't write past the allocated operand_stack buffer.
+    // `operand_stack` is allocated with `max_stack` slots, so the
+    // highest valid index after pushing is `max_stack - 1`.
+    if (frame->sp + 1 >= frame->max_stack) {
         fprintf(stderr, "Erro: Stack Overflow. Max stack: %d (PC: %d)\n", frame->max_stack, frame->pc);
         exit(EXIT_FAILURE);
     }
@@ -542,6 +561,7 @@ void exec_lastore(Frame *frame) {
     int64_t value = pop_long(frame);
     int index = pop_stack(frame);
     int arr_ref = pop_stack(frame);
+    (void)value;
     printf("Aviso: LASTORE array Ref %d[%d] (simulação)\n", arr_ref, index);
 }
 
@@ -556,6 +576,7 @@ void exec_fastore(Frame *frame) {
     int value = pop_stack(frame);
     int index = pop_stack(frame);
     int arr_ref = pop_stack(frame);
+    (void)value;
     printf("Aviso: FASTORE array Ref %d[%d] (simulação)\n", arr_ref, index);
 }
 
@@ -570,6 +591,7 @@ void exec_dastore(Frame *frame) {
     int64_t value = pop_long(frame);
     int index = pop_stack(frame);
     int arr_ref = pop_stack(frame);
+    (void)value;
     printf("Aviso: DASTORE array Ref %d[%d] (simulação)\n", arr_ref, index);
 }
 
@@ -587,6 +609,7 @@ void exec_multianewarray(Frame *frame) {
     }
     // Push array ref (simulated)
     push_stack(frame, 1);
+    (void)cp_idx;
     printf("Aviso: MULTIANEWARRAY criado com %d dimensões (simulação, push 1)\n", dimensions);
 }
 
@@ -1041,10 +1064,10 @@ void exec_new(Frame *frame) {
     byte2 index = (frame->code[frame->pc] << 8) | frame->code[frame->pc+1];
     frame->pc += 2;
     (void)index; // variável não utilizada intencionalmente (silencia warning)
-    
-    // Apenas empilha uma referência fictícia nova (ex: 2)
-    push_stack(frame, 2); 
-    printf("--- [NEW] Criando objeto simulado Ref: 2 ---\n");
+    // Cria uma nova referência de objeto única e empilha
+    int ref = create_object_ref();
+    push_stack(frame, ref);
+    printf("--- [NEW] Criando objeto simulado Ref: %d ---\n", ref);
 }
 
 // ---------------------- Long loads/stores ----------------------

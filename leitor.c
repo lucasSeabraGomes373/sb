@@ -39,6 +39,12 @@ ClassFile* readFile (char * filename) {
 		return NULL;
 	} else {
 		classfile = (ClassFile*) malloc(sizeof(ClassFile));
+		// initialize pointer fields to NULL to avoid freeing uninitialized memory
+		classfile->constant_pool = NULL;
+		classfile->interfaces = NULL;
+		classfile->fields = NULL;
+		classfile->methods = NULL;
+		classfile->attributes = NULL;
 
 		classfile->magic = byte4Read(fp);
 		classfile->minor_version = byte2Read(fp);
@@ -86,66 +92,66 @@ cp_info * readConstantPool (FILE * fp, byte2 constant_pool_count) {
 	// 
 	// Solução: Alocar count * 2 para garantir espaço suficiente
 	cp_info * readConstantPool = (cp_info *) malloc((constant_pool_count * 2) * sizeof(cp_info));
-	cp_info * aux = NULL;
+	cp_info * auxiliarCp = NULL;
 	// Use the original loop condition but with safety of larger allocation
-	for (aux = readConstantPool; aux < readConstantPool + constant_pool_count - 1; aux++){
-		aux->tag = byte1Read(fp);
-		switch(aux->tag) {
+	for (auxiliarCp = readConstantPool; auxiliarCp < readConstantPool + constant_pool_count - 1; auxiliarCp++){
+		auxiliarCp->tag = byte1Read(fp);
+		switch(auxiliarCp->tag) {
 			case CONSTANT_Class:
-				aux->UnionCP.CONSTANT_Class.name_index = byte2Read(fp);
+				auxiliarCp->UnionCP.CONSTANT_Class.name_index = byte2Read(fp);
 				break;
 			case CONSTANT_Fieldref:
-				aux->UnionCP.CONSTANT_Fieldref.class_index = byte2Read(fp);
-				aux->UnionCP.CONSTANT_Fieldref.name_and_type_index = byte2Read(fp);
+				auxiliarCp->UnionCP.CONSTANT_Fieldref.class_index = byte2Read(fp);
+				auxiliarCp->UnionCP.CONSTANT_Fieldref.name_and_type_index = byte2Read(fp);
 				break;
 			case CONSTANT_Methodref:
-				aux->UnionCP.CONSTANT_Methodref.class_index = byte2Read(fp);
-				aux->UnionCP.CONSTANT_Methodref.name_and_type_index = byte2Read(fp);
+				auxiliarCp->UnionCP.CONSTANT_Methodref.class_index = byte2Read(fp);
+				auxiliarCp->UnionCP.CONSTANT_Methodref.name_and_type_index = byte2Read(fp);
 				break;
 			case CONSTANT_InterfaceMethodref:
-				aux->UnionCP.CONSTANT_InterfaceMethodref.class_index = byte2Read(fp);
-				aux->UnionCP.CONSTANT_InterfaceMethodref.name_and_type_index = byte2Read(fp);
+				auxiliarCp->UnionCP.CONSTANT_InterfaceMethodref.class_index = byte2Read(fp);
+				auxiliarCp->UnionCP.CONSTANT_InterfaceMethodref.name_and_type_index = byte2Read(fp);
 				break;
 			case CONSTANT_String:
-				aux->UnionCP.CONSTANT_String.string_index = byte2Read(fp);
+				auxiliarCp->UnionCP.CONSTANT_String.string_index = byte2Read(fp);
 				break;
 			case CONSTANT_Integer:
-				aux->UnionCP.CONSTANT_Integer.bytes = byte4Read(fp);
+				auxiliarCp->UnionCP.CONSTANT_Integer.bytes = byte4Read(fp);
 				break;
 			case CONSTANT_Float:
-				aux->UnionCP.CONSTANT_Float.bytes = byte4Read(fp);
+				auxiliarCp->UnionCP.CONSTANT_Float.bytes = byte4Read(fp);
 				break;
 			case CONSTANT_Long:
-				aux->UnionCP.CONSTANT_Long.high_bytes = byte4Read(fp);
-				aux->UnionCP.CONSTANT_Long.low_bytes = byte4Read(fp);
-				aux++;
+				auxiliarCp->UnionCP.CONSTANT_Long.high_bytes = byte4Read(fp);
+				auxiliarCp->UnionCP.CONSTANT_Long.low_bytes = byte4Read(fp);
+				auxiliarCp++;
 				break;
 			case CONSTANT_Double:
-				aux->UnionCP.CONSTANT_Double.high_bytes = byte4Read(fp);
-				aux->UnionCP.CONSTANT_Double.low_bytes = byte4Read(fp);
-				aux++;
+				auxiliarCp->UnionCP.CONSTANT_Double.high_bytes = byte4Read(fp);
+				auxiliarCp->UnionCP.CONSTANT_Double.low_bytes = byte4Read(fp);
+				auxiliarCp++;
 				break;
 			case CONSTANT_NameAndType:
-				aux->UnionCP.CONSTANT_NameAndType.name_index = byte2Read(fp);
-				aux->UnionCP.CONSTANT_NameAndType.descriptor_index = byte2Read(fp);
+				auxiliarCp->UnionCP.CONSTANT_NameAndType.name_index = byte2Read(fp);
+				auxiliarCp->UnionCP.CONSTANT_NameAndType.descriptor_index = byte2Read(fp);
 				break;
 			case CONSTANT_Utf8:
-				aux->UnionCP.CONSTANT_UTF8.length = byte2Read(fp);
-				aux->UnionCP.CONSTANT_UTF8.bytes = malloc(aux->UnionCP.CONSTANT_UTF8.length*sizeof(byte1));
-				for (byte1 * i = aux->UnionCP.CONSTANT_UTF8.bytes; i <aux->UnionCP.CONSTANT_UTF8.bytes+aux->UnionCP.CONSTANT_UTF8.length; i++){
+				auxiliarCp->UnionCP.CONSTANT_UTF8.length = byte2Read(fp);
+				auxiliarCp->UnionCP.CONSTANT_UTF8.bytes = malloc(auxiliarCp->UnionCP.CONSTANT_UTF8.length*sizeof(byte1));
+				for (byte1 * i = auxiliarCp->UnionCP.CONSTANT_UTF8.bytes; i <auxiliarCp->UnionCP.CONSTANT_UTF8.bytes+auxiliarCp->UnionCP.CONSTANT_UTF8.length; i++){
 					*i = byte1Read(fp);
 				}
 				break;
 			case CONSTANT_MethodHandle:
-				aux->UnionCP.CONSTANT_MethodHandle.reference_kind = byte1Read(fp);
-				aux->UnionCP.CONSTANT_MethodHandle.reference_index = byte2Read(fp);
+				auxiliarCp->UnionCP.CONSTANT_MethodHandle.reference_kind = byte1Read(fp);
+				auxiliarCp->UnionCP.CONSTANT_MethodHandle.reference_index = byte2Read(fp);
 				break;
 			case CONSTANT_MethodType:
-				aux->UnionCP.CONSTANT_MethodType.descriptor_index = byte2Read(fp);
+				auxiliarCp->UnionCP.CONSTANT_MethodType.descriptor_index = byte2Read(fp);
 				break;
 			case CONSTANT_InvokeDynamic:
-				aux->UnionCP.CONSTANT_InvokeDynamicInfo.bootstrap_method_attr_index = byte2Read(fp);
-				aux->UnionCP.CONSTANT_InvokeDynamicInfo.name_and_type_index = byte2Read(fp);
+				auxiliarCp->UnionCP.CONSTANT_InvokeDynamicInfo.bootstrap_method_attr_index = byte2Read(fp);
+				auxiliarCp->UnionCP.CONSTANT_InvokeDynamicInfo.name_and_type_index = byte2Read(fp);
 				break;
 			default:
 				printf("Default\n");
@@ -157,14 +163,14 @@ cp_info * readConstantPool (FILE * fp, byte2 constant_pool_count) {
 
 byte2 * readInterfaces (FILE * fp, byte2 size) {
 	byte2 * interfaces = malloc(size*sizeof(byte2));
-	for (byte2 * auxInterfaces = interfaces; auxInterfaces < interfaces+size; auxInterfaces++) {
-		*auxInterfaces = byte2Read(fp);
+	for (byte2 * interfacesAux = interfaces; interfacesAux < interfaces+size; interfacesAux++) {
+		*interfacesAux = byte2Read(fp);
 	}
 	return interfaces;
 }
 
 field_info * readField (FILE * fp, byte2 fields_count, cp_info * cp) {
-	field_info * fields = (field_info*)malloc(fields_count*sizeof(field_info));
+	field_info * fields = (field_info*)calloc(fields_count,sizeof(field_info));
 	for (field_info * i = fields; i < fields + fields_count; i++) {
 		i->access_flags = byte2Read(fp);
 		i->name_index = byte2Read(fp);
@@ -182,7 +188,7 @@ field_info * readField (FILE * fp, byte2 fields_count, cp_info * cp) {
 	return fields;
 }
 method_info * readMethod (FILE * fp, byte2 methods_count, cp_info *cp) {
-	method_info * methods = (method_info*) malloc(methods_count*sizeof(method_info));
+	method_info * methods = (method_info*) calloc(methods_count,sizeof(method_info));
 
 	for (method_info * i = methods; i < methods + methods_count; i++) {
 		i->access_flags = byte2Read(fp);
@@ -204,19 +210,19 @@ method_info * readMethod (FILE * fp, byte2 methods_count, cp_info *cp) {
 #define RETORNO_INCREMENTO 512
 
 char* decodeCode(cp_info *cp, byte2 sizeCP, byte1 *code, byte4 length, instruction *instrucoes) {
-    byte1 *aux;
+	byte1 *ponteiroCodigo;
     int capacidade = RETORNO_INICIAL;
     char *retorno = malloc(capacidade);
     if (!retorno) return NULL;
 
     int offset = 0;
-    byte2 *aux2;
+	byte2 *ponteiroArg2;
     char *stringargs;
     char *stringdecod;
 
-    for (aux = code; aux < code + length;) {
-        byte1 opcode = *aux;
-        int numarg = instrucoes[opcode].numarg;
+	for (ponteiroCodigo = code; ponteiroCodigo < code + length;) {
+		byte1 opcode = *ponteiroCodigo;
+		int numarg = instrucoes[opcode].numarg;
 
         // Estimar espaço necessário para a próxima instrução
         int espaco_necessario = 128;
@@ -231,7 +237,7 @@ char* decodeCode(cp_info *cp, byte2 sizeCP, byte1 *code, byte4 length, instructi
         }
 
         offset += snprintf(retorno + offset, capacidade - offset, "%s", instrucoes[opcode].instr_name);
-        aux++;
+		ponteiroCodigo++;
 
         switch (numarg) {
             case 0:
@@ -239,21 +245,21 @@ char* decodeCode(cp_info *cp, byte2 sizeCP, byte1 *code, byte4 length, instructi
                 break;
 
             case 1:
-                offset += snprintf(retorno + offset, capacidade - offset, " #%d ", *aux);
-                stringdecod = decodeInstructionOp(cp, *aux, sizeCP);
-                offset += snprintf(retorno + offset, capacidade - offset, "%s\n", stringdecod);
-                free(stringdecod);
-                aux++;
+				offset += snprintf(retorno + offset, capacidade - offset, " #%d ", *ponteiroCodigo);
+				stringdecod = decodeInstructionOp(cp, *ponteiroCodigo, sizeCP);
+				offset += snprintf(retorno + offset, capacidade - offset, "%s\n", stringdecod);
+				free(stringdecod);
+				ponteiroCodigo++;
                 break;
 
             case 2:
-                aux2 = malloc(sizeof(byte2));
-                *aux2 = (*aux << 8) | *(aux + 1);
-                stringargs = decodeInstructionOp(cp, *aux2, sizeCP);
-                offset += snprintf(retorno + offset, capacidade - offset, " #%d %s\n", *aux2, stringargs);
-                free(stringargs);
-                aux += 2;
-                free(aux2);
+				ponteiroArg2 = malloc(sizeof(byte2));
+				*ponteiroArg2 = (*ponteiroCodigo << 8) | *(ponteiroCodigo + 1);
+				stringargs = decodeInstructionOp(cp, *ponteiroArg2, sizeCP);
+				offset += snprintf(retorno + offset, capacidade - offset, " #%d %s\n", *ponteiroArg2, stringargs);
+				free(stringargs);
+				ponteiroCodigo += 2;
+				free(ponteiroArg2);
                 break;
 
             default:
@@ -309,7 +315,7 @@ void freeMethod(method_info method) {
 
 code_attribute * readCode (FILE * fp, cp_info *cp) {
 	code_attribute * code_attributes = NULL;
-	code_attributes = (code_attribute*) malloc(sizeof(code_attribute));
+	code_attributes = (code_attribute*) calloc(1, sizeof(code_attribute));
 	code_attributes->max_stack = byte2Read(fp);
 	code_attributes->max_locals = byte2Read(fp);
 	code_attributes->code_length = byte4Read(fp);
@@ -339,7 +345,7 @@ code_attribute * readCode (FILE * fp, cp_info *cp) {
 }
 
 line_number_table * readLineNumberTable(FILE * fp, cp_info * cp) {
-	line_number_table * lnt = (line_number_table*)malloc(sizeof(line_number_table));
+	line_number_table * lnt = (line_number_table*)calloc(1, sizeof(line_number_table));
 	lnt->line_number_table_length = byte2Read(fp);
 	if (lnt->line_number_table_length > 0) {
 		lnt->info = (line_number_tableInfo*)malloc(lnt->line_number_table_length*sizeof(line_number_tableInfo));
@@ -363,12 +369,12 @@ exception_table * readExceptionTable (FILE * fp, byte2 size) {
 }
 
 attribute_info * readAttributes (FILE * fp, cp_info * cp) {
-	attribute_info * attributes = (attribute_info*) malloc(sizeof(attribute_info));
+	attribute_info * attributes = (attribute_info*) calloc(1, sizeof(attribute_info));
 	attributes->attribute_name_index = byte2Read(fp);
 	attributes->attribute_length = byte4Read(fp);
 	if (attributes->attribute_length > 0) {
-			char * string_name_index;
-					string_name_index = decodeStringUTF8(cp+attributes->attribute_name_index-1);
+			char * string_name_index = NULL;
+			string_name_index = decodeStringUTF8(cp+attributes->attribute_name_index-1);
 			if(strcmp(string_name_index,"SourceFile") == 0){
 				source_file_attribute * SourceFile = NULL;
 				SourceFile = readSourceFile(fp);
@@ -403,13 +409,14 @@ attribute_info * readAttributes (FILE * fp, cp_info * cp) {
 				exceptions = readExceptionsAttribute(fp);
 				attributes->info = (exceptions_attribute*)exceptions;
 			}
+			if (string_name_index) free(string_name_index);
 	}
 
 	return attributes;
 }
 
 exceptions_attribute * readExceptionsAttribute (FILE * fp) {
-	exceptions_attribute * exceptions = (exceptions_attribute*)malloc(sizeof(exceptions_attribute));
+	exceptions_attribute * exceptions = (exceptions_attribute*)calloc(1, sizeof(exceptions_attribute));
 	exceptions->number_of_exceptions = byte2Read(fp);
 	exceptions->exception_index_table = NULL;
 	if (exceptions->number_of_exceptions > 0) {
@@ -422,19 +429,19 @@ exceptions_attribute * readExceptionsAttribute (FILE * fp) {
 }
 
 constantValue_attribute * readConstantValue (FILE * fp) {
-	constantValue_attribute * cv = (constantValue_attribute*)malloc(sizeof(constantValue_attribute));
+	constantValue_attribute * cv = (constantValue_attribute*)calloc(1, sizeof(constantValue_attribute));
 	cv->constantvalue_index = byte2Read(fp);
 	return cv;
 }
 
 signature_attribute * readSignature (FILE * fp) {
-	signature_attribute * signature = (signature_attribute*)malloc(sizeof(signature_attribute));
+	signature_attribute * signature = (signature_attribute*)calloc(1, sizeof(signature_attribute));
 	signature->signature_index = byte2Read(fp);
 	return signature;
 }
 
 innerClasses_attribute * readInnerClasses (FILE * fp, cp_info * cp) {
-	innerClasses_attribute * innerClasses = (innerClasses_attribute*)malloc(sizeof(innerClasses_attribute));
+	innerClasses_attribute * innerClasses = (innerClasses_attribute*)calloc(1, sizeof(innerClasses_attribute));
 	innerClasses->number_of_classes = byte2Read(fp);
 	if (innerClasses->number_of_classes > 0) {
 		innerClasses->classes_vector = (classes**)malloc(innerClasses->number_of_classes*sizeof(classes*));
@@ -446,7 +453,7 @@ innerClasses_attribute * readInnerClasses (FILE * fp, cp_info * cp) {
 }
 
 classes * readClasses (FILE * fp) {
-	classes * classeRetorno = (classes*)malloc(sizeof(classes));
+	classes * classeRetorno = (classes*)calloc(1, sizeof(classes));
 	classeRetorno->inner_class_info_index = byte2Read(fp);
 	classeRetorno->outer_class_info_index = byte2Read(fp);
 	classeRetorno->inner_name_index = byte2Read(fp);
@@ -456,7 +463,7 @@ classes * readClasses (FILE * fp) {
 }
 
 stackMapTable_attribute * readStackMapTable (FILE * fp) {
-	stackMapTable_attribute * stackMapTable = (stackMapTable_attribute*)malloc(sizeof(stackMapTable_attribute));
+	stackMapTable_attribute * stackMapTable = (stackMapTable_attribute*)calloc(1, sizeof(stackMapTable_attribute));
 	stackMapTable->number_of_entries = byte2Read(fp);
 	if (stackMapTable->number_of_entries > 0) {
 		stackMapTable->entries = (stack_map_frame**)malloc(stackMapTable->number_of_entries*sizeof(stack_map_frame*));
@@ -468,7 +475,7 @@ stackMapTable_attribute * readStackMapTable (FILE * fp) {
 }
 
 stack_map_frame * readStackMapFrame (FILE * fp) {
-	stack_map_frame * StackMapFrame = (stack_map_frame*)malloc(sizeof(stack_map_frame));
+	stack_map_frame * StackMapFrame = (stack_map_frame*)calloc(1, sizeof(stack_map_frame));
 	StackMapFrame->frame_type = byte1Read(fp);
 	if (StackMapFrame->frame_type >= 0 && StackMapFrame->frame_type <= 63) {
 	} else if (StackMapFrame->frame_type >= 64 && StackMapFrame->frame_type <= 127) {
@@ -512,7 +519,7 @@ stack_map_frame * readStackMapFrame (FILE * fp) {
 }
 
 verification_type_info * readVerificationTypeInfo (FILE * fp) {
-	verification_type_info * VTI = (verification_type_info*)malloc(sizeof(verification_type_info));
+	verification_type_info * VTI = (verification_type_info*)calloc(1, sizeof(verification_type_info));
 	VTI->tag = byte1Read(fp);
 	switch (VTI->tag) {
 		case 7:
@@ -530,7 +537,7 @@ verification_type_info * readVerificationTypeInfo (FILE * fp) {
 
 source_file_attribute * readSourceFile (FILE * fp) {
 	source_file_attribute * SourceFile = NULL;
-	SourceFile = (source_file_attribute*)malloc(sizeof(source_file_attribute));
+	SourceFile = (source_file_attribute*)calloc(1, sizeof(source_file_attribute));
 	SourceFile->source_file_index = byte2Read(fp);
 	return SourceFile;
 }
@@ -595,11 +602,11 @@ void printClassFile (ClassFile * classfile, FILE* fp) {
 	cp_info * aux;
 	double valor;
 	uint64_t longValue;
-	method_info * auxMethod;
-	field_info * auxField;
-	attribute_info ** auxAttributeClasse;
-	attribute_info ** fieldAttrAux;
-	exception_table * exceptionTableAux;
+	method_info * metodoAuxiliar;
+	field_info * campoAuxiliar;
+	attribute_info ** atributosClasse;
+	attribute_info ** atributosCampo;
+	exception_table * tabelaExcecaoAux;
 	uint32_t contador = 1;
 	// byte1 * auxBytesCode;
 	char *ponteiroprint;
@@ -722,34 +729,34 @@ void printClassFile (ClassFile * classfile, FILE* fp) {
 
 	fprintf(fp, "\n\n   --------------------  Interfaces     --------------------\n\n");
 	contador = 0;
-	for (byte2 * auxInterfaces = classfile->interfaces; auxInterfaces < classfile->interfaces+classfile->interfaces_count; auxInterfaces++) {
-		ponteiroprint = decodeNIeNT(classfile->constant_pool,*auxInterfaces,1);
-		fprintf(fp, "Interface: 				cp_info#%d <%s>\n",*auxInterfaces, ponteiroprint);
-        free(ponteiroprint);
+	for (byte2 * interfacesAux = classfile->interfaces; interfacesAux < classfile->interfaces+classfile->interfaces_count; interfacesAux++) {
+		ponteiroprint = decodeNIeNT(classfile->constant_pool,*interfacesAux,1);
+		fprintf(fp, "Interface: 			cp_info#%d <%s>\n",*interfacesAux, ponteiroprint);
+		free(ponteiroprint);
 	}
 
 	fprintf(fp, "\n\n   --------------------  Fields   --------------------  \n\n");
 	contador = 0;
-	for (auxField = classfile->fields; auxField < classfile->fields + classfile->fields_count; auxField++,contador++) {
+	for (campoAuxiliar = classfile->fields; campoAuxiliar < classfile->fields + classfile->fields_count; campoAuxiliar++,contador++) {
 		fprintf(fp, ">>> [%d] Field \n",contador);
-		ponteiroprint = decodeStringUTF8(classfile->constant_pool-1+auxField->name_index);
-		fprintf(fp, "Name: 				cp_info#%d <%s>\n",auxField->name_index,ponteiroprint);
+		ponteiroprint = decodeStringUTF8(classfile->constant_pool-1+campoAuxiliar->name_index);
+		fprintf(fp, "Name: 			cp_info#%d <%s>\n",campoAuxiliar->name_index,ponteiroprint);
         free(ponteiroprint);
-		ponteiroprint = decodeStringUTF8(classfile->constant_pool-1+auxField->descriptor_index);
-		fprintf(fp, "Descriptor: 		cp_info#%d <%s>\n",auxField->descriptor_index,ponteiroprint);
+		ponteiroprint = decodeStringUTF8(classfile->constant_pool-1+campoAuxiliar->descriptor_index);
+		fprintf(fp, "Descriptor: 		cp_info#%d <%s>\n",campoAuxiliar->descriptor_index,ponteiroprint);
         free(ponteiroprint);
-		ponteiroprint = decodeAccessFlags(auxField->access_flags);
-		fprintf(fp, "Access Flags: 		0x%04x [%s]\n",auxField->access_flags,ponteiroprint);
+		ponteiroprint = decodeAccessFlags(campoAuxiliar->access_flags);
+		fprintf(fp, "Access Flags: 		0x%04x [%s]\n",campoAuxiliar->access_flags,ponteiroprint);
         free(ponteiroprint);
-		fprintf(fp, "Attributes Count:		%d\n\n",auxField->attributes_count);
-		if (auxField->attributes_count > 0) {
-			fieldAttrAux = auxField->attributes;
-			for (int posicaoFields = 0; posicaoFields < auxField->attributes_count; posicaoFields++) {
-				ponteiroprint = decodeStringUTF8(classfile->constant_pool-1+(*(fieldAttrAux+posicaoFields))->attribute_name_index);
-				fprintf(fp, "Attribute Name Index: 	cp_info#%d <%s>\n",(*(fieldAttrAux+posicaoFields))->attribute_name_index,ponteiroprint);
-				fprintf(fp, "Attribute Length: 		%d\n",(*(fieldAttrAux+posicaoFields))->attribute_length);
+		fprintf(fp, "Attributes Count:		%d\n\n",campoAuxiliar->attributes_count);
+		if (campoAuxiliar->attributes_count > 0) {
+			atributosCampo = campoAuxiliar->attributes;
+			for (int posicaoFields = 0; posicaoFields < campoAuxiliar->attributes_count; posicaoFields++) {
+				ponteiroprint = decodeStringUTF8(classfile->constant_pool-1+(*(atributosCampo+posicaoFields))->attribute_name_index);
+				fprintf(fp, "Attribute Name Index: \tcp_info#%d <%s>\n",(*(atributosCampo+posicaoFields))->attribute_name_index,ponteiroprint);
+				fprintf(fp, "Attribute Length: 		%d\n",(*(atributosCampo+posicaoFields))->attribute_length);
 				if (strcmp(ponteiroprint, "ConstantValue") == 0) {
-					constantValue_attribute * cvAux = (constantValue_attribute*)(*(fieldAttrAux+posicaoFields))->info;
+					constantValue_attribute * cvAux = (constantValue_attribute*)(*(atributosCampo+posicaoFields))->info;
 					cp_info * cpInfoAux = classfile->constant_pool-1+cvAux->constantvalue_index;
 					//FLOAT
 					if (cpInfoAux->tag == 4) {
@@ -772,7 +779,7 @@ void printClassFile (ClassFile * classfile, FILE* fp) {
 						fprintf(fp, "Constant Value Index: 		cp_info#%d <%lu>\n",cvAux->constantvalue_index,valorL);
 					}
 				} else if (strcmp(ponteiroprint,"Signature") == 0) {
-					signature_attribute * sig = (signature_attribute*)(*(fieldAttrAux+posicaoFields))->info;
+					signature_attribute * sig = (signature_attribute*)(*(atributosCampo+posicaoFields))->info;
 					char * Signature_Index = decodeStringUTF8(classfile->constant_pool-1+sig->signature_index);
 					fprintf(fp, "Signature index: 		cp_info#%d <%s>\n",sig->signature_index,Signature_Index);
 				}
@@ -785,58 +792,58 @@ void printClassFile (ClassFile * classfile, FILE* fp) {
 
 	contador = 0;
 
-	for (auxMethod = classfile->methods; auxMethod < classfile->methods + classfile->methods_count; auxMethod++,contador++) {
+	for (metodoAuxiliar = classfile->methods; metodoAuxiliar < classfile->methods + classfile->methods_count; metodoAuxiliar++,contador++) {
 		fprintf(fp, "[>>> [%d] Method\n\n",contador);
-		ponteiroprint = decodeStringUTF8(classfile->constant_pool-1+auxMethod->name_index);
-		fprintf(fp, "Name: 			cp_info#%d <%s>\n",auxMethod->name_index,ponteiroprint);
+		ponteiroprint = decodeStringUTF8(classfile->constant_pool-1+metodoAuxiliar->name_index);
+		fprintf(fp, "Name: 			cp_info#%d <%s>\n",metodoAuxiliar->name_index,ponteiroprint);
         free(ponteiroprint);
-		ponteiroprint = decodeStringUTF8(classfile->constant_pool-1+auxMethod->descriptor_index);
-		fprintf(fp, "Descriptor: 		cp_info#%d <%s>\n",auxMethod->descriptor_index,ponteiroprint);
+		ponteiroprint = decodeStringUTF8(classfile->constant_pool-1+metodoAuxiliar->descriptor_index);
+		fprintf(fp, "Descriptor: 		cp_info#%d <%s>\n",metodoAuxiliar->descriptor_index,ponteiroprint);
         free(ponteiroprint);
-		ponteiroprint = decodeAccessFlags(auxMethod->access_flags);
-		fprintf(fp, "Access Flags: 		0x%04x [%s]\n",auxMethod->access_flags,ponteiroprint);
-		fprintf(fp, "\nAttributes Count: 	%d\n\n",auxMethod->attributes_count);
+		ponteiroprint = decodeAccessFlags(metodoAuxiliar->access_flags);
+		fprintf(fp, "Access Flags: 		0x%04x [%s]\n",metodoAuxiliar->access_flags,ponteiroprint);
+		fprintf(fp, "\nAttributes Count: 	%d\n\n",metodoAuxiliar->attributes_count);
 
 		//fprintf(fp, "Atributos:\n");
-		attribute_info ** auxAttrCompleto = auxMethod->attributes;
-		for (int posicao = 0; posicao < auxMethod->attributes_count; posicao++) {
+		attribute_info ** atributosMetodo = metodoAuxiliar->attributes;
+		for (int posicao = 0; posicao < metodoAuxiliar->attributes_count; posicao++) {
             free(ponteiroprint);
-			ponteiroprint = decodeStringUTF8(classfile->constant_pool-1+(*(auxAttrCompleto+posicao))->attribute_name_index);
-			fprintf(fp, "Attribute Name Index: 	cp_info#%d <%s>\n",(*(auxAttrCompleto+posicao))->attribute_name_index,ponteiroprint);
-			fprintf(fp, "Attribute Length: 	%d\n",(*(auxAttrCompleto+posicao))->attribute_length);
+			ponteiroprint = decodeStringUTF8(classfile->constant_pool-1+(*(atributosMetodo+posicao))->attribute_name_index);
+			fprintf(fp, "Attribute Name Index: 	cp_info#%d <%s>\n",(*(atributosMetodo+posicao))->attribute_name_index,ponteiroprint);
+			fprintf(fp, "Attribute Length: 	%d\n",(*(atributosMetodo+posicao))->attribute_length);
 
 			if (strcmp(ponteiroprint,"Code") == 0) {
-				code_attribute * auxCodePontual = (code_attribute*)(*(auxAttrCompleto+posicao))->info;
-				fprintf(fp, "Max Stack:		%d\n",auxCodePontual->max_stack);
-				fprintf(fp, "Max Locals: 		%d\n",auxCodePontual->max_locals);
-				fprintf(fp, "Code length: 		%d\n",auxCodePontual->code_length);
+				code_attribute * codigoAux = (code_attribute*)(*(atributosMetodo+posicao))->info;
+				fprintf(fp, "Max Stack: 		%d\n",codigoAux->max_stack);
+				fprintf(fp, "Max Locals: 		%d\n",codigoAux->max_locals);
+				fprintf(fp, "Code length: 		%d\n",codigoAux->code_length);
 				printf("\n\n");
-				if(auxCodePontual->code_length > 0) {
-                    free(ponteiroprint);
-					ponteiroprint = decodeCode(classfile->constant_pool,classfile->constant_pool_count,auxCodePontual->code,auxCodePontual->code_length,instrucoes);
+				if(codigoAux->code_length > 0) {
+					free(ponteiroprint);
+					ponteiroprint = decodeCode(classfile->constant_pool,classfile->constant_pool_count,codigoAux->code,codigoAux->code_length,instrucoes);
 					fprintf(fp, "%s\n",ponteiroprint);
 				}
-				if(auxCodePontual->exception_table_length > 0) {
+				if(codigoAux->exception_table_length > 0) {
 					fprintf(fp, "Exception Table:\n");
 					fprintf(fp, "Nr.    Start PC  End PC  Handread PC  Catch Type\n");
 					int contadorExceptionTable = 0;
-					for(exceptionTableAux = auxCodePontual->table; exceptionTableAux < auxCodePontual->table + auxCodePontual->exception_table_length; exceptionTableAux++){
-						fprintf(fp, "%d    %02x    %02x    %02x  %02x\n",contadorExceptionTable,exceptionTableAux->start_pc,exceptionTableAux->end_pc,exceptionTableAux->handler_pc,exceptionTableAux->catch_type);
+					for(tabelaExcecaoAux = codigoAux->table; tabelaExcecaoAux < codigoAux->table + codigoAux->exception_table_length; tabelaExcecaoAux++){
+						fprintf(fp, "%d    %02x    %02x    %02x  %02x\n",contadorExceptionTable,tabelaExcecaoAux->start_pc,tabelaExcecaoAux->end_pc,tabelaExcecaoAux->handler_pc,tabelaExcecaoAux->catch_type);
 						contadorExceptionTable++;
 					}
 					fprintf(fp, "\n\n");
 				}
-				fprintf(fp, "Attributes Count: 		%d\n",auxCodePontual->attributes_count);
-				if (auxCodePontual->attributes_count > 0) {
+				fprintf(fp, "Attributes Count: \t\t\t%d\n",codigoAux->attributes_count);
+				if (codigoAux->attributes_count > 0) {
 					int lntContador = 0;
-					attribute_info ** auxAttributesFromCode = auxCodePontual->attributes;
-					for (int posicaoDois = 0; posicaoDois < auxCodePontual->attributes_count; posicaoDois++) {
+					attribute_info ** atributosDoCodigo = codigoAux->attributes;
+					for (int posicaoDois = 0; posicaoDois < codigoAux->attributes_count; posicaoDois++) {
                         free(ponteiroprint);
-						ponteiroprint = decodeStringUTF8(classfile->constant_pool-1+(*(auxAttributesFromCode+posicaoDois))->attribute_name_index);
-						fprintf(fp, "Attribute Name Index: 		cp_info#%d <%s>\n",(*(auxAttributesFromCode+posicaoDois))->attribute_name_index,ponteiroprint);
-						fprintf(fp, "Attribute Length:		%d\n",(*(auxAttributesFromCode+posicaoDois))->attribute_length);
+						ponteiroprint = decodeStringUTF8(classfile->constant_pool-1+(*(atributosDoCodigo+posicaoDois))->attribute_name_index);
+						fprintf(fp, "Attribute Name Index: 		cp_info#%d <%s>\n",(*(atributosDoCodigo+posicaoDois))->attribute_name_index,ponteiroprint);
+						fprintf(fp, "Attribute Length:		%d\n",(*(atributosDoCodigo+posicaoDois))->attribute_length);
 						if (strcmp(ponteiroprint,"LineNumberTable") == 0) {
-							line_number_table * lntAux = (line_number_table*)(*(auxAttributesFromCode+posicaoDois))->info;
+							line_number_table * lntAux = (line_number_table*)(*(atributosDoCodigo+posicaoDois))->info;
 							fprintf(fp, "Line Number Table Length: 	%d\n",(int)lntAux->line_number_table_length);
 							fprintf(fp, "\nAttribute Info: \n");
 							fprintf(fp, "Nr.  |  StartPC  |  LineNumber\n");
@@ -847,7 +854,7 @@ void printClassFile (ClassFile * classfile, FILE* fp) {
 							fprintf(fp, "\n");
 						} else if (strcmp(ponteiroprint,"StackMapTable") == 0) {
 							int offsetImpressao = 0;
-							stackMapTable_attribute * smt = (stackMapTable_attribute*)(*(auxAttributesFromCode+posicaoDois))->info;
+							stackMapTable_attribute * smt = (stackMapTable_attribute*)(*(atributosDoCodigo+posicaoDois))->info;
 							stack_map_frame ** smf = smt->entries;
 							fprintf(fp, "Nr.    Stack Map Frame\n");
 							for (int posicaoSMF = 0; posicaoSMF < smt->number_of_entries; posicaoSMF++) {
@@ -1049,7 +1056,7 @@ void printClassFile (ClassFile * classfile, FILE* fp) {
 					}
 				}
 			} else if (strcmp(ponteiroprint,"Exceptions") == 0) {
-				exceptions_attribute * excpAux = (exceptions_attribute*)(*(auxAttrCompleto+posicao))->info;
+				exceptions_attribute * excpAux = (exceptions_attribute*)(*(atributosMetodo+posicao))->info;
 				int contadorExcp = 0;
 				char * exceptionIndexString;
 				fprintf(fp, "Nr.    Exception      Verbose\n");
@@ -1059,7 +1066,7 @@ void printClassFile (ClassFile * classfile, FILE* fp) {
 					contadorExcp++;
 				}
 			} else if (strcmp(ponteiroprint,"Signature") == 0) {
-				signature_attribute * sig = (signature_attribute*)(*(auxAttrCompleto+posicao))->info;
+				signature_attribute * sig = (signature_attribute*)(*(atributosMetodo+posicao))->info;
 				char * Signature_Index = decodeStringUTF8(classfile->constant_pool-1+sig->signature_index);
 				fprintf(fp, "Signature index: cp_info#%d <%s>\n",sig->signature_index,Signature_Index);
 			}
@@ -1067,17 +1074,17 @@ void printClassFile (ClassFile * classfile, FILE* fp) {
 	}
 
 	fprintf(fp, "\n\n     Attributes     \n\n");
-	auxAttributeClasse = classfile->attributes;
+	atributosClasse = classfile->attributes;
 	for (int posicao = 0; posicao < classfile->attributes_count; posicao++) {
         free(ponteiroprint);
-		ponteiroprint = decodeStringUTF8(classfile->constant_pool+(*(auxAttributeClasse+posicao))->attribute_name_index-1);
-		fprintf(fp, "Attribute Name Index:		cp_info#%d <%s>\n",(*(auxAttributeClasse+posicao))->attribute_name_index,ponteiroprint);
-		fprintf(fp, "Attribute Length:		%d\n",(int) (*(auxAttributeClasse+posicao))->attribute_length);
+		ponteiroprint = decodeStringUTF8(classfile->constant_pool+(*(atributosClasse+posicao))->attribute_name_index-1);
+		fprintf(fp, "Attribute Name Index:\t\tcp_info#%d <%s>\n",(*(atributosClasse+posicao))->attribute_name_index,ponteiroprint);
+		fprintf(fp, "Attribute Length:\t\t%d\n",(int) (*(atributosClasse+posicao))->attribute_length);
 		if (strcmp(ponteiroprint,"SourceFile") == 0) {
-		 	source_file_attribute * SourceFile = ((source_file_attribute*)((*(auxAttributeClasse+posicao))->info));
-			fprintf(fp, "Source File Name Index:		cp_info#%d <%s>\n",SourceFile->source_file_index,decodeStringUTF8(classfile->constant_pool+SourceFile->source_file_index-1));
+		 	source_file_attribute * SourceFile = ((source_file_attribute*)((*(atributosClasse+posicao))->info));
+			fprintf(fp, "Source File Name Index:\t\tcp_info#%d <%s>\n",SourceFile->source_file_index,decodeStringUTF8(classfile->constant_pool+SourceFile->source_file_index-1));
 		} else if (strcmp(ponteiroprint, "InnerClasses") == 0) {
-			innerClasses_attribute * innerC = ((innerClasses_attribute*)((*(auxAttributeClasse+posicao))->info));
+			innerClasses_attribute * innerC = ((innerClasses_attribute*)((*(atributosClasse+posicao))->info));
 			fprintf(fp, "Nr.    Inner Class      Outer Class    Inner Name    Access Flags\n");
 			char * innerClassString, * outerClassString, * innerNameIndex, * accessFlagsInner;
 			classes ** vetorClasses = innerC->classes_vector;
@@ -1091,7 +1098,7 @@ void printClassFile (ClassFile * classfile, FILE* fp) {
                 free(accessFlagsInner);
 			}
 		} else if (strcmp(ponteiroprint,"Signature") == 0) {
-			signature_attribute * sig = (signature_attribute*)((*(auxAttributeClasse+posicao))->info);
+			signature_attribute * sig = (signature_attribute*)((*(atributosClasse+posicao))->info);
 			char * Signature_Index = decodeStringUTF8(classfile->constant_pool-1+sig->signature_index);
 			fprintf(fp, "Signature index: cp_info#%d <%s>\n",sig->signature_index,Signature_Index);
 		}
@@ -1102,16 +1109,251 @@ void printClassFile (ClassFile * classfile, FILE* fp) {
 	freeInstructions(instrucoes);
 }
 void freeConstantPool(cp_info *cp, byte2 count) {
-    if (!cp) return;
-    
-    // Free all UTF8 strings in the constant pool
-    // We allocated count * 3 slots to account for Long/Double entries
-    for (int i = 0; i < count * 3; i++) {
-        if (cp[i].tag == CONSTANT_Utf8 && cp[i].UnionCP.CONSTANT_UTF8.bytes) {
-            free(cp[i].UnionCP.CONSTANT_UTF8.bytes);
-        }
-    }
-    
-    // Free the constant pool array itself
-    free(cp);
+	if (!cp) return;
+
+	// Free all UTF8 strings in the constant pool
+	// `readConstantPool` allocates `count * 2` entries to leave
+	// extra space for CONSTANT_Long and CONSTANT_Double which
+	// consume two slots each. Use the same allocation size here
+	// to avoid reading past the buffer.
+	// Only iterate over the actual constant pool entries (count-1 entries)
+	// The reader allocates a larger buffer to simplify handling LONG/DOUBLE,
+	// but only the first (count-1) entries are initialized with tags.
+	for (int i = 0; i < (int)(count - 1); i++) {
+		if (cp[i].tag == CONSTANT_Utf8 && cp[i].UnionCP.CONSTANT_UTF8.bytes) {
+			free(cp[i].UnionCP.CONSTANT_UTF8.bytes);
+		}
+	}
+
+	// Free the constant pool array itself
+	free(cp);
 }
+
+// Forward declarations for helper free functions
+static void freeAttribute(attribute_info *attr, cp_info *cp, byte2 cp_count);
+static void freeCodeAttribute(code_attribute *code_attr, cp_info *cp, byte2 cp_count);
+static void freeLineNumberTable(line_number_table *lnt);
+static void freeStackMapTable(stackMapTable_attribute *smt);
+static void freeStackMapFrame(stack_map_frame *smf);
+static void freeVerificationTypeInfo(verification_type_info *vti);
+
+void freeClassFile(ClassFile *cf) {
+	if (!cf) return;
+
+	// Free interfaces
+	if (cf->interfaces_count > 0 && cf->interfaces) {
+		free(cf->interfaces);
+		cf->interfaces = NULL;
+	}
+
+	// Free fields and their attributes
+	if (cf->fields_count > 0 && cf->fields) {
+		for (int i = 0; i < cf->fields_count; i++) {
+			field_info *f = &cf->fields[i];
+			if (f->attributes_count > 0 && f->attributes) {
+				for (int j = 0; j < f->attributes_count; j++) {
+					if (f->attributes[j]) {
+						freeAttribute(f->attributes[j], cf->constant_pool, cf->constant_pool_count);
+						free(f->attributes[j]);
+					}
+				}
+				free(f->attributes);
+			}
+		}
+		free(cf->fields);
+		cf->fields = NULL;
+	}
+
+	// Free methods and their attributes
+	if (cf->methods_count > 0 && cf->methods) {
+		for (int i = 0; i < cf->methods_count; i++) {
+			method_info *m = &cf->methods[i];
+			if (m->attributes_count > 0 && m->attributes) {
+				for (int j = 0; j < m->attributes_count; j++) {
+					if (m->attributes[j]) {
+						freeAttribute(m->attributes[j], cf->constant_pool, cf->constant_pool_count);
+						free(m->attributes[j]);
+					}
+				}
+				free(m->attributes);
+			}
+		}
+		free(cf->methods);
+		cf->methods = NULL;
+	}
+
+	// Free class attributes
+	if (cf->attributes_count > 0 && cf->attributes) {
+		for (int i = 0; i < cf->attributes_count; i++) {
+			if (cf->attributes[i]) {
+				freeAttribute(cf->attributes[i], cf->constant_pool, cf->constant_pool_count);
+				free(cf->attributes[i]);
+			}
+		}
+		free(cf->attributes);
+		cf->attributes = NULL;
+	}
+
+	// Free constant pool (must be after attributes because some frees may reference it)
+	if (cf->constant_pool) {
+		freeConstantPool(cf->constant_pool, cf->constant_pool_count);
+		cf->constant_pool = NULL;
+	}
+
+	// Finally free the ClassFile struct itself
+	free(cf);
+}
+
+static void freeAttribute(attribute_info *attr, cp_info *cp, byte2 cp_count) {
+	if (!attr) return;
+
+	// Determine attribute name (we re-use decodeStringUTF8 which returns malloc'd string)
+	char *name = NULL;
+	if (cp && attr->attribute_name_index > 0 && attr->attribute_name_index <= cp_count) {
+		name = decodeStringUTF8(cp + attr->attribute_name_index - 1);
+	}
+
+	if (name) {
+		if (strcmp(name, "SourceFile") == 0) {
+			source_file_attribute *sf = (source_file_attribute*)attr->info;
+			if (sf) free(sf);
+		} else if (strcmp(name, "Code") == 0) {
+				code_attribute *ca = (code_attribute*)attr->info;
+				if (ca) {
+					freeCodeAttribute(ca, cp, cp_count);
+				}
+		} else if (strcmp(name, "LineNumberTable") == 0) {
+			line_number_table *lnt = (line_number_table*)attr->info;
+			if (lnt) freeLineNumberTable(lnt);
+		} else if (strcmp(name, "StackMapTable") == 0) {
+			stackMapTable_attribute *smt = (stackMapTable_attribute*)attr->info;
+			if (smt) freeStackMapTable(smt);
+		} else if (strcmp(name, "InnerClasses") == 0) {
+			innerClasses_attribute *ic = (innerClasses_attribute*)attr->info;
+			if (ic) {
+				if (ic->classes_vector) {
+					for (int k = 0; k < ic->number_of_classes; k++) {
+						if (ic->classes_vector[k]) free(ic->classes_vector[k]);
+					}
+					free(ic->classes_vector);
+				}
+				free(ic);
+			}
+		} else if (strcmp(name, "Signature") == 0) {
+			signature_attribute *sig = (signature_attribute*)attr->info;
+			if (sig) free(sig);
+		} else if (strcmp(name, "ConstantValue") == 0) {
+			constantValue_attribute *cv = (constantValue_attribute*)attr->info;
+			if (cv) free(cv);
+		} else if (strcmp(name, "Exceptions") == 0) {
+			exceptions_attribute *exc = (exceptions_attribute*)attr->info;
+			if (exc) {
+				if (exc->exception_index_table) free(exc->exception_index_table);
+				free(exc);
+			}
+		} else {
+			// Unknown attribute type: free info pointer generically
+			if (attr->info) free(attr->info);
+		}
+
+		free(name);
+	} else {
+		// If we couldn't decode name, try to free generically
+		if (attr->info) free(attr->info);
+	}
+}
+
+static void freeCodeAttribute(code_attribute *code_attr, cp_info *cp, byte2 cp_count) {
+	if (!code_attr) return;
+
+	if (code_attr->code) free(code_attr->code);
+
+	if (code_attr->table) {
+		free(code_attr->table);
+	}
+
+	if (code_attr->attributes) {
+		for (int i = 0; i < code_attr->attributes_count; i++) {
+			if (code_attr->attributes[i]) {
+				freeAttribute(code_attr->attributes[i], cp, cp_count);
+				free(code_attr->attributes[i]);
+			}
+		}
+		free(code_attr->attributes);
+	}
+
+	free(code_attr);
+}
+
+static void freeLineNumberTable(line_number_table *lnt) {
+	if (!lnt) return;
+	if (lnt->info) free(lnt->info);
+	free(lnt);
+}
+
+static void freeStackMapTable(stackMapTable_attribute *smt) {
+	if (!smt) return;
+	if (smt->entries) {
+		for (int i = 0; i < smt->number_of_entries; i++) {
+			if (smt->entries[i]) {
+				freeStackMapFrame(smt->entries[i]);
+				free(smt->entries[i]);
+			}
+		}
+		free(smt->entries);
+	}
+	free(smt);
+}
+
+static void freeStackMapFrame(stack_map_frame *smf) {
+	if (!smf) return;
+
+	byte1 ft = smf->frame_type;
+	if (ft >= 64 && ft <= 127) {
+		// same_locals_1_stack_item_frame
+		if (smf->map_frame_type.same_locals_1_stack_item_frame.stack) {
+			verification_type_info **arr = smf->map_frame_type.same_locals_1_stack_item_frame.stack;
+			if (*arr) {
+				freeVerificationTypeInfo(*arr);
+			}
+			free(arr);
+		}
+	} else if (ft == 247) {
+		if (smf->map_frame_type.same_locals_1_stack_item_frame_extended.stack) {
+			verification_type_info **arr = smf->map_frame_type.same_locals_1_stack_item_frame_extended.stack;
+			if (*arr) freeVerificationTypeInfo(*arr);
+			free(arr);
+		}
+	} else if (ft >= 252 && ft <= 254) {
+		// append_frame
+		byte2 sizeMalloc = (ft - 251);
+		if (smf->map_frame_type.append_frame.locals) {
+			verification_type_info **locals = smf->map_frame_type.append_frame.locals;
+			for (int i = 0; i < sizeMalloc; i++) {
+				if (locals[i]) freeVerificationTypeInfo(locals[i]);
+			}
+			free(locals);
+		}
+	} else if (ft == 255) {
+		// full_frame
+		if (smf->map_frame_type.full_frame.locals) {
+			for (int i = 0; i < smf->map_frame_type.full_frame.number_of_locals; i++) {
+				if (smf->map_frame_type.full_frame.locals[i]) freeVerificationTypeInfo(smf->map_frame_type.full_frame.locals[i]);
+			}
+			free(smf->map_frame_type.full_frame.locals);
+		}
+		if (smf->map_frame_type.full_frame.stack) {
+			for (int i = 0; i < smf->map_frame_type.full_frame.number_of_stack_items; i++) {
+				if (smf->map_frame_type.full_frame.stack[i]) freeVerificationTypeInfo(smf->map_frame_type.full_frame.stack[i]);
+			}
+			free(smf->map_frame_type.full_frame.stack);
+		}
+	}
+}
+
+static void freeVerificationTypeInfo(verification_type_info *vti) {
+	if (!vti) return;
+	// verification_type_info contains no nested heap allocations itself
+	free(vti);
+}
+

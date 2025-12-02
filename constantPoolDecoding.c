@@ -151,20 +151,20 @@ float decodeFloatInfo(cp_info *cp) {
 
 
 char* decodeNIeNT(cp_info *cp, byte2 index, byte1 tipo) {
-	cp_info *aux = cp + index - 1;
-	cp_info *aux2, *aux3;
+	cp_info *entradaCp = cp + index - 1;
+	cp_info *entradaCp2, *entradaCp3;
 
 	switch (tipo) {
 		case 1:
-			aux2 = cp + aux->UnionCP.CONSTANT_Class.name_index - 1;
-			return decodeStringUTF8(aux2);
+			entradaCp2 = cp + entradaCp->UnionCP.CONSTANT_Class.name_index - 1;
+			return decodeStringUTF8(entradaCp2);
 
 		case 2:
-			aux2 = cp + aux->UnionCP.CONSTANT_NameAndType.name_index - 1;
-			aux3 = cp + aux->UnionCP.CONSTANT_NameAndType.descriptor_index - 1;
+			entradaCp2 = cp + entradaCp->UnionCP.CONSTANT_NameAndType.name_index - 1;
+			entradaCp3 = cp + entradaCp->UnionCP.CONSTANT_NameAndType.descriptor_index - 1;
 
-			char *nome = decodeStringUTF8(aux2);
-			char *desc = decodeStringUTF8(aux3);
+			char *nome = decodeStringUTF8(entradaCp2);
+			char *desc = decodeStringUTF8(entradaCp3);
 			char *retorno = malloc(strlen(nome) + strlen(desc) + 2); // +1 for ':' +1 for '\0'
 
 			if (!retorno) return NULL;
@@ -175,7 +175,7 @@ char* decodeNIeNT(cp_info *cp, byte2 index, byte1 tipo) {
 			return retorno;
 
 		case 3: case 4: case 5: case 6:
-			return decodeStringUTF8(aux);
+			return decodeStringUTF8(entradaCp);
 	}
 
 	return strdup("undefined");

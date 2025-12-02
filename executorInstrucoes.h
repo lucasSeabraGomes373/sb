@@ -18,6 +18,7 @@ void inicializarInstrucoes(void);
 void inicializarAmbiente(ClassFile *classFile);
 void executar(Frame *frame);
 code_attribute* getMethodCode(ClassFile *classFile, const char* name, const char* descriptor);
+int create_object_ref(void);
 
 #endif 
 
