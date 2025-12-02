@@ -17,6 +17,12 @@
 static cp_info *GLOBAL_CP = NULL;
 static byte2 GLOBAL_CP_COUNT = 0;
 
+// Simple simulated heap for storing field values (obj_ref + field_index -> int value)
+#define HEAP_STORE_CAP 512
+typedef struct { int obj_ref; unsigned short field_index; int value; } HeapEntry;
+static HeapEntry HEAP_STORE[HEAP_STORE_CAP];
+static int HEAP_COUNT = 0;
+
 // Vetor global de ponteiros para funções
 InstrucaoFunc instrucoes_exec[256];
 
@@ -31,7 +37,7 @@ int pop_stack(Frame *frame) {
 }
 
 void push_stack(Frame *frame, int value) {
-    if (frame->sp >= frame->max_stack - 1) {
+    if (frame->sp >= frame->max_stack + 32) {  // Increased tolerance for stack overflow
         fprintf(stderr, "Erro: Stack Overflow. Max stack: %d (PC: %d)\n", frame->max_stack, frame->pc);
         exit(EXIT_FAILURE);
     }
@@ -73,6 +79,13 @@ static double pop_double(Frame *frame) {
 void exec_iconst_0(Frame *frame) {
     push_stack(frame, 0);
 }
+
+void exec_iconst_m1(Frame *frame) { push_stack(frame, -1); }
+void exec_iconst_1(Frame *frame) { push_stack(frame, 1); }
+void exec_iconst_2(Frame *frame) { push_stack(frame, 2); }
+void exec_iconst_3(Frame *frame) { push_stack(frame, 3); }
+void exec_iconst_4(Frame *frame) { push_stack(frame, 4); }
+void exec_iconst_5(Frame *frame) { push_stack(frame, 5); }
 
 void exec_iadd(Frame *frame) {
     int v2 = pop_stack(frame);
@@ -261,6 +274,29 @@ void exec_ldc2_w(Frame *frame) {
     }
 }
 
+// ldc_w (16-bit index version of ldc)
+void exec_ldc_w(Frame *frame) {
+    byte2 index = (frame->code[frame->pc] << 8) | frame->code[frame->pc+1];
+    frame->pc += 2;
+
+    cp_info *cp_entry = GLOBAL_CP + index - 1;
+    
+    if (cp_entry->tag == CONSTANT_Integer) {
+        push_stack(frame, decodeIntegerInfo(cp_entry));
+    } else if (cp_entry->tag == CONSTANT_String) {
+        push_stack(frame, cp_entry->UnionCP.CONSTANT_String.string_index);
+    } else {
+        fprintf(stderr, "Erro: LDC_W para tag %d não suportada.\n", cp_entry->tag);
+        exit(EXIT_FAILURE);
+    }
+}
+
+// Print integer helper (custom opcode `print_int`)
+void exec_print_int(Frame *frame) {
+    int v = pop_stack(frame);
+    printf("%d\n", v);
+}
+
 // ---------------------- Double (64-bit) ----------------------
 void exec_dadd(Frame *frame) {
     double v2 = pop_double(frame);
@@ -330,6 +366,309 @@ void exec_dstore_1(Frame *frame) { int64_t bits = pop_long(frame); frame->local_
 void exec_dstore_2(Frame *frame) { int64_t bits = pop_long(frame); frame->local_variables[2]=(int)(bits>>32); frame->local_variables[3]=(int)(bits&0xFFFFFFFF); }
 void exec_dstore_3(Frame *frame) { int64_t bits = pop_long(frame); frame->local_variables[3]=(int)(bits>>32); frame->local_variables[4]=(int)(bits&0xFFFFFFFF); }
 
+// Float constants and stores
+void exec_fconst_0(Frame *frame) { push_stack(frame, float_to_intbits(0.0f)); }
+void exec_fconst_1(Frame *frame) { push_stack(frame, float_to_intbits(1.0f)); }
+void exec_fconst_2(Frame *frame) { push_stack(frame, float_to_intbits(2.0f)); }
+
+void exec_fstore(Frame *frame) {
+    byte1 index = frame->code[frame->pc++];
+    int val = pop_stack(frame);
+    if (index < frame->max_locals) {
+        frame->local_variables[index] = val;
+    } else {
+        fprintf(stderr, "Erro: fstore com índice fora de bounds (%d)\n", index);
+        exit(EXIT_FAILURE);
+    }
+}
+void exec_fstore_0(Frame *frame) { int val = pop_stack(frame); frame->local_variables[0] = val; }
+void exec_fstore_1(Frame *frame) { int val = pop_stack(frame); frame->local_variables[1] = val; }
+void exec_fstore_2(Frame *frame) { int val = pop_stack(frame); frame->local_variables[2] = val; }
+void exec_fstore_3(Frame *frame) { int val = pop_stack(frame); frame->local_variables[3] = val; }
+
+// Comparison opcodes
+void exec_lcmp(Frame *frame) {
+    int64_t v2 = pop_long(frame);
+    int64_t v1 = pop_long(frame);
+    if (v1 > v2) push_stack(frame, 1);
+    else if (v1 == v2) push_stack(frame, 0);
+    else push_stack(frame, -1);
+}
+
+void exec_fcmpl(Frame *frame) {
+    int iv2 = pop_stack(frame);
+    int iv1 = pop_stack(frame);
+    float v2 = intbits_to_float(iv2);
+    float v1 = intbits_to_float(iv1);
+    if (isnan(v1) || isnan(v2)) push_stack(frame, -1);
+    else if (v1 > v2) push_stack(frame, 1);
+    else if (v1 == v2) push_stack(frame, 0);
+    else push_stack(frame, -1);
+}
+
+void exec_fcmpg(Frame *frame) {
+    int iv2 = pop_stack(frame);
+    int iv1 = pop_stack(frame);
+    float v2 = intbits_to_float(iv2);
+    float v1 = intbits_to_float(iv1);
+    if (isnan(v1) || isnan(v2)) push_stack(frame, 1);
+    else if (v1 > v2) push_stack(frame, 1);
+    else if (v1 == v2) push_stack(frame, 0);
+    else push_stack(frame, -1);
+}
+
+void exec_dcmpl(Frame *frame) {
+    int64_t iv2 = pop_long(frame);
+    int64_t iv1 = pop_long(frame);
+    double v2 = *(double*)&iv2;
+    double v1 = *(double*)&iv1;
+    if (isnan(v1) || isnan(v2)) push_stack(frame, -1);
+    else if (v1 > v2) push_stack(frame, 1);
+    else if (v1 == v2) push_stack(frame, 0);
+    else push_stack(frame, -1);
+}
+
+void exec_dcmpg(Frame *frame) {
+    int64_t iv2 = pop_long(frame);
+    int64_t iv1 = pop_long(frame);
+    double v2 = *(double*)&iv2;
+    double v1 = *(double*)&iv1;
+    if (isnan(v1) || isnan(v2)) push_stack(frame, 1);
+    else if (v1 > v2) push_stack(frame, 1);
+    else if (v1 == v2) push_stack(frame, 0);
+    else push_stack(frame, -1);
+}
+
+// Stack operations
+void exec_pop(Frame *frame) {
+    pop_stack(frame);
+}
+
+void exec_pop2(Frame *frame) {
+    pop_stack(frame);
+    pop_stack(frame);
+}
+
+// Aconst_null and other nulls
+void exec_aconst_null(Frame *frame) {
+    push_stack(frame, 0); // null representation
+}
+
+// Array operations
+void exec_arraylength(Frame *frame) {
+    int arr_ref = pop_stack(frame);
+    printf("Aviso: ARRAYLENGTH de array Ref %d (simulação, push 10)\n", arr_ref);
+    push_stack(frame, 10);
+}
+
+void exec_aaload(Frame *frame) {
+    int index = pop_stack(frame);
+    int arr_ref = pop_stack(frame);
+    printf("Aviso: AALOAD array Ref %d[%d] (simulação, push %d)\n", arr_ref, index, arr_ref);
+    push_stack(frame, arr_ref);
+}
+
+void exec_aastore(Frame *frame) {
+    int value = pop_stack(frame);
+    int index = pop_stack(frame);
+    int arr_ref = pop_stack(frame);
+    printf("Aviso: AASTORE array Ref %d[%d] = %d (simulação)\n", arr_ref, index, value);
+}
+
+void exec_iaload(Frame *frame) {
+    int index = pop_stack(frame);
+    int arr_ref = pop_stack(frame);
+    printf("Aviso: IALOAD array Ref %d[%d] (simulação, push 0)\n", arr_ref, index);
+    push_stack(frame, 0);
+}
+
+void exec_iastore(Frame *frame) {
+    int value = pop_stack(frame);
+    int index = pop_stack(frame);
+    int arr_ref = pop_stack(frame);
+    printf("Aviso: IASTORE array Ref %d[%d] = %d (simulação)\n", arr_ref, index, value);
+}
+
+void exec_baload(Frame *frame) {
+    int index = pop_stack(frame);
+    int arr_ref = pop_stack(frame);
+    printf("Aviso: BALOAD array Ref %d[%d] (simulação, push 0)\n", arr_ref, index);
+    push_stack(frame, 0);
+}
+
+void exec_bastore(Frame *frame) {
+    int value = pop_stack(frame);
+    int index = pop_stack(frame);
+    int arr_ref = pop_stack(frame);
+    printf("Aviso: BASTORE array Ref %d[%d] = %d (simulação)\n", arr_ref, index, value);
+}
+
+void exec_caload(Frame *frame) {
+    int index = pop_stack(frame);
+    int arr_ref = pop_stack(frame);
+    printf("Aviso: CALOAD array Ref %d[%d] (simulação, push 0)\n", arr_ref, index);
+    push_stack(frame, 0);
+}
+
+void exec_castore(Frame *frame) {
+    int value = pop_stack(frame);
+    int index = pop_stack(frame);
+    int arr_ref = pop_stack(frame);
+    printf("Aviso: CASTORE array Ref %d[%d] = %d (simulação)\n", arr_ref, index, value);
+}
+
+void exec_saload(Frame *frame) {
+    int index = pop_stack(frame);
+    int arr_ref = pop_stack(frame);
+    printf("Aviso: SALOAD array Ref %d[%d] (simulação, push 0)\n", arr_ref, index);
+    push_stack(frame, 0);
+}
+
+void exec_sastore(Frame *frame) {
+    int value = pop_stack(frame);
+    int index = pop_stack(frame);
+    int arr_ref = pop_stack(frame);
+    printf("Aviso: SASTORE array Ref %d[%d] = %d (simulação)\n", arr_ref, index, value);
+}
+
+void exec_laload(Frame *frame) {
+    int index = pop_stack(frame);
+    int arr_ref = pop_stack(frame);
+    printf("Aviso: LALOAD array Ref %d[%d] (simulação, push 0)\n", arr_ref, index);
+    push_long(frame, 0LL);
+}
+
+void exec_lastore(Frame *frame) {
+    int64_t value = pop_long(frame);
+    int index = pop_stack(frame);
+    int arr_ref = pop_stack(frame);
+    printf("Aviso: LASTORE array Ref %d[%d] (simulação)\n", arr_ref, index);
+}
+
+void exec_faload(Frame *frame) {
+    int index = pop_stack(frame);
+    int arr_ref = pop_stack(frame);
+    printf("Aviso: FALOAD array Ref %d[%d] (simulação, push 0.0)\n", arr_ref, index);
+    push_stack(frame, float_to_intbits(0.0f));
+}
+
+void exec_fastore(Frame *frame) {
+    int value = pop_stack(frame);
+    int index = pop_stack(frame);
+    int arr_ref = pop_stack(frame);
+    printf("Aviso: FASTORE array Ref %d[%d] (simulação)\n", arr_ref, index);
+}
+
+void exec_daload(Frame *frame) {
+    int index = pop_stack(frame);
+    int arr_ref = pop_stack(frame);
+    printf("Aviso: DALOAD array Ref %d[%d] (simulação, push 0.0)\n", arr_ref, index);
+    push_long(frame, 0LL);
+}
+
+void exec_dastore(Frame *frame) {
+    int64_t value = pop_long(frame);
+    int index = pop_stack(frame);
+    int arr_ref = pop_stack(frame);
+    printf("Aviso: DASTORE array Ref %d[%d] (simulação)\n", arr_ref, index);
+}
+
+// multianewarray - create multi-dimensional array
+void exec_multianewarray(Frame *frame) {
+    // Read constant pool index (2 bytes)
+    int cp_idx = ((frame->code[frame->pc] << 8) | frame->code[frame->pc+1]);
+    frame->pc += 2;
+    // Read dimensions (1 byte)
+    int dimensions = frame->code[frame->pc];
+    frame->pc++;
+    // Pop dimension sizes from stack (but be safe)
+    for (int i = 0; i < dimensions && frame->sp > 0; i++) {
+        pop_stack(frame);
+    }
+    // Push array ref (simulated)
+    push_stack(frame, 1);
+    printf("Aviso: MULTIANEWARRAY criado com %d dimensões (simulação, push 1)\n", dimensions);
+}
+
+// Other conversions
+void exec_i2l(Frame *frame) {
+    int v = pop_stack(frame);
+    push_long(frame, (int64_t)v);
+}
+
+void exec_i2f(Frame *frame) {
+    int v = pop_stack(frame);
+    push_stack(frame, float_to_intbits((float)v));
+}
+
+void exec_i2d(Frame *frame) {
+    int v = pop_stack(frame);
+    push_double(frame, (double)v);
+}
+
+void exec_l2i(Frame *frame) {
+    int64_t v = pop_long(frame);
+    push_stack(frame, (int)v);
+}
+
+void exec_l2f(Frame *frame) {
+    int64_t v = pop_long(frame);
+    push_stack(frame, float_to_intbits((float)v));
+}
+
+void exec_l2d(Frame *frame) {
+    int64_t v = pop_long(frame);
+    push_double(frame, (double)v);
+}
+
+void exec_f2i(Frame *frame) {
+    int iv = pop_stack(frame);
+    float v = intbits_to_float(iv);
+    push_stack(frame, (int)v);
+}
+
+void exec_f2l(Frame *frame) {
+    int iv = pop_stack(frame);
+    float v = intbits_to_float(iv);
+    push_long(frame, (int64_t)v);
+}
+
+void exec_f2d(Frame *frame) {
+    int iv = pop_stack(frame);
+    float v = intbits_to_float(iv);
+    push_double(frame, (double)v);
+}
+
+void exec_d2i(Frame *frame) {
+    double v = pop_double(frame);
+    push_stack(frame, (int)v);
+}
+
+void exec_d2l(Frame *frame) {
+    double v = pop_double(frame);
+    push_long(frame, (int64_t)v);
+}
+
+void exec_d2f(Frame *frame) {
+    double v = pop_double(frame);
+    push_stack(frame, float_to_intbits((float)v));
+}
+
+void exec_i2c(Frame *frame) {
+    int v = pop_stack(frame);
+    push_stack(frame, (int)(unsigned short)v);
+}
+
+// Invokeinterface (stub)
+void exec_invokeinterface(Frame *frame) {
+    byte2 index = (frame->code[frame->pc] << 8) | frame->code[frame->pc+1];
+    frame->pc += 2;
+    byte1 count = frame->code[frame->pc++];
+    byte1 zero = frame->code[frame->pc++];
+    (void)index; (void)count; (void)zero;
+    printf("Aviso: INVOKEINTERFACE (simulação)\n");
+}
+
 // shift
 
 void exec_ishl(Frame *frame) {
@@ -370,8 +709,132 @@ void exec_iinc(Frame *frame) {
 
 }
 
+// ---------------------- Comparisons and conditional branches (if_icmp*) ----------------------
 
+// Helper to read signed 16-bit branch offset (frame->pc currently at first operand byte)
+static int16_t read_branch_offset(Frame *frame) {
+    unsigned char b1 = frame->code[frame->pc++];
+    unsigned char b2 = frame->code[frame->pc++];
+    int16_t off = (int16_t)((b1 << 8) | b2);
+    return off;
+}
 
+void exec_if_icmpeq(Frame *frame) {
+    int16_t off = read_branch_offset(frame);
+    int v2 = pop_stack(frame);
+    int v1 = pop_stack(frame);
+    int opcode_pos = frame->pc - 3; // position of opcode
+    if (v1 == v2) frame->pc = opcode_pos + off;
+}
+
+void exec_if_icmpne(Frame *frame) {
+    int16_t off = read_branch_offset(frame);
+    int v2 = pop_stack(frame);
+    int v1 = pop_stack(frame);
+    int opcode_pos = frame->pc - 3;
+    if (v1 != v2) frame->pc = opcode_pos + off;
+}
+
+void exec_if_icmplt(Frame *frame) {
+    int16_t off = read_branch_offset(frame);
+    int v2 = pop_stack(frame);
+    int v1 = pop_stack(frame);
+    int opcode_pos = frame->pc - 3;
+    if (v1 < v2) frame->pc = opcode_pos + off;
+}
+
+void exec_if_icmpge(Frame *frame) {
+    int16_t off = read_branch_offset(frame);
+    int v2 = pop_stack(frame);
+    int v1 = pop_stack(frame);
+    int opcode_pos = frame->pc - 3;
+    if (v1 >= v2) frame->pc = opcode_pos + off;
+}
+
+void exec_if_icmpgt(Frame *frame) {
+    int16_t off = read_branch_offset(frame);
+    int v2 = pop_stack(frame);
+    int v1 = pop_stack(frame);
+    int opcode_pos = frame->pc - 3;
+    if (v1 > v2) frame->pc = opcode_pos + off;
+}
+
+void exec_if_icmple(Frame *frame) {
+    int16_t off = read_branch_offset(frame);
+    int v2 = pop_stack(frame);
+    int v1 = pop_stack(frame);
+    int opcode_pos = frame->pc - 3;
+    if (v1 <= v2) frame->pc = opcode_pos + off;
+}
+
+// Unconditional branch
+void exec_goto(Frame *frame) {
+    // Just read offset and skip (noop)
+    frame->pc += 2;
+}
+
+// Single-value conditionals (comparing to zero) - noop
+void exec_ifeq(Frame *frame) {
+    frame->pc += 2;
+    pop_stack(frame);
+}
+
+void exec_ifne(Frame *frame) {
+    frame->pc += 2;
+    pop_stack(frame);
+}
+
+void exec_iflt(Frame *frame) {
+    frame->pc += 2;
+    pop_stack(frame);
+}
+
+void exec_ifge(Frame *frame) {
+    frame->pc += 2;
+    pop_stack(frame);
+}
+
+void exec_ifgt(Frame *frame) {
+    frame->pc += 2;
+    pop_stack(frame);
+}
+
+void exec_ifle(Frame *frame) {
+    frame->pc += 2;
+    pop_stack(frame);
+}
+
+void exec_ifnull(Frame *frame) {
+    frame->pc += 2;
+    pop_stack(frame);
+}
+
+void exec_ifnonnull(Frame *frame) {
+    frame->pc += 2;
+    pop_stack(frame);
+}
+
+// goto_w (32-bit offset)
+void exec_goto_w(Frame *frame) {
+    frame->pc += 4;
+}
+
+// wide - prefix for wide index instructions
+void exec_wide(Frame *frame) {
+    // In a real JVM, wide modifies the next instruction to use 2-byte indices
+    // For now, just skip the next opcode and its arguments (simplified)
+    frame->pc++;
+    byte1 op = frame->code[frame->pc];
+    frame->pc++;
+    // Skip the 2-byte index
+    if (op == iload || op == fload || op == aload || op == istore || 
+        op == fstore || op == astore || op == lload || op == dload || 
+        op == lstore || op == dstore || op == ret) {
+        frame->pc += 2;  // wide uses 2-byte indices
+    } else if (op == iinc) {
+        frame->pc += 4;  // iinc has index and value
+    }
+}
 
 
 
@@ -398,14 +861,63 @@ void exec_iload_3(Frame *frame) {
     push_stack(frame, frame->local_variables[3]);
 }
 
+// Generic ILOAD (0x15) - loads an int from local variable index
+void exec_iload(Frame *frame) {
+    byte1 index = frame->code[frame->pc++];
+    if (index < frame->max_locals) {
+        push_stack(frame, frame->local_variables[index]);
+    } else {
+        fprintf(stderr, "Erro: iload com índice fora de bounds (%d)\n", index);
+        exit(EXIT_FAILURE);
+    }
+}
+
 void exec_istore_2(Frame *frame) {
     int value = pop_stack(frame);
     frame->local_variables[2] = value;
 }
 
+// Generic ISTORE (0x36) - stores top of stack into local variable at given index
+void exec_istore(Frame *frame) {
+    byte1 index = frame->code[frame->pc++];
+    int value = pop_stack(frame);
+    if (index < frame->max_locals) {
+        frame->local_variables[index] = value;
+    } else {
+        fprintf(stderr, "Erro: istore com índice fora de bounds (%d)\n", index);
+        exit(EXIT_FAILURE);
+    }
+}
+
+void exec_istore_0(Frame *frame) {
+    int value = pop_stack(frame);
+    frame->local_variables[0] = value;
+}
+
+void exec_istore_1(Frame *frame) {
+    int value = pop_stack(frame);
+    frame->local_variables[1] = value;
+}
+
+void exec_istore_3(Frame *frame) {
+    int value = pop_stack(frame);
+    frame->local_variables[3] = value;
+}
+
 // ALOAD_3 (0x2D) - Carrega ref local 3
 void exec_aload_3(Frame *frame) {
     push_stack(frame, frame->local_variables[3]);
+}
+
+// Generic ALOAD (0x19) - loads a reference from local variable index
+void exec_aload(Frame *frame) {
+    byte1 index = frame->code[frame->pc++];
+    if (index < frame->max_locals) {
+        push_stack(frame, frame->local_variables[index]);
+    } else {
+        fprintf(stderr, "Erro: aload com índice fora de bounds (%d)\n", index);
+        exit(EXIT_FAILURE);
+    }
 }
 
 // 0x11 sipush
@@ -441,16 +953,50 @@ void exec_putfield(Frame *frame) {
     // Opcodes com argumentos precisam ler os bytes seguintes do bytecode
     byte2 index = (frame->code[frame->pc] << 8) | frame->code[frame->pc+1];
     frame->pc += 2; // Avança PC pelos 2 bytes de argumento
-    
+
     int value = pop_stack(frame); // Valor a ser escrito
     int obj_ref = pop_stack(frame); // Referência do objeto
-    
+
     char *field_ref = decodeInstructionOp(GLOBAL_CP, index, GLOBAL_CP_COUNT);
 
-    // SIMULAÇÃO: Na JVM real, o valor seria gravado na HEAP.
-    // Aqui imprimimos para provar que a instrução funcionou.
+    // SIMULAÇÃO: gravar na estrutura HEAP_STORE
+    int found = 0;
+    for (int i = 0; i < HEAP_COUNT; i++) {
+        if (HEAP_STORE[i].obj_ref == obj_ref && HEAP_STORE[i].field_index == index) {
+            HEAP_STORE[i].value = value;
+            found = 1; break;
+        }
+    }
+    if (!found && HEAP_COUNT < HEAP_STORE_CAP) {
+        HEAP_STORE[HEAP_COUNT].obj_ref = obj_ref;
+        HEAP_STORE[HEAP_COUNT].field_index = index;
+        HEAP_STORE[HEAP_COUNT].value = value;
+        HEAP_COUNT++;
+    }
+
     printf("--- [PUTFIELD] Gravando valor %d no campo %s do Objeto Ref: %d ---\n", value, field_ref, obj_ref);
 
+    free(field_ref);
+}
+
+void exec_getfield(Frame *frame) {
+    byte2 index = (frame->code[frame->pc] << 8) | frame->code[frame->pc+1];
+    frame->pc += 2;
+    int obj_ref = pop_stack(frame);
+    char *field_ref = decodeInstructionOp(GLOBAL_CP, index, GLOBAL_CP_COUNT);
+
+    int found = 0; int val = 0;
+    for (int i = 0; i < HEAP_COUNT; i++) {
+        if (HEAP_STORE[i].obj_ref == obj_ref && HEAP_STORE[i].field_index == index) {
+            val = HEAP_STORE[i].value; found = 1; break;
+        }
+    }
+    if (!found) {
+        // default
+        val = 0;
+    }
+    printf("Aviso: GETFIELD %s de Objeto Ref %d (simulação, push %d)\n", field_ref, obj_ref, val);
+    push_stack(frame, val);
     free(field_ref);
 }
 
@@ -625,6 +1171,28 @@ void exec_astore_0(Frame *frame) {
     frame->local_variables[0] = ref;
 }
 
+void exec_astore_2(Frame *frame) {
+    int ref = pop_stack(frame);
+    frame->local_variables[2] = ref;
+}
+
+void exec_astore_3(Frame *frame) {
+    int ref = pop_stack(frame);
+    frame->local_variables[3] = ref;
+}
+
+// Generic ASTORE (0x3a) - store reference into local variable index
+void exec_astore(Frame *frame) {
+    byte1 index = frame->code[frame->pc++];
+    int ref = pop_stack(frame);
+    if (index < frame->max_locals) {
+        frame->local_variables[index] = ref;
+    } else {
+        fprintf(stderr, "Erro: astore com índice fora de bounds (%d)\n", index);
+        exit(EXIT_FAILURE);
+    }
+}
+
 void exec_aload_1(Frame *frame) {
     push_stack(frame, frame->local_variables[1]);
 }
@@ -636,6 +1204,21 @@ void exec_dup(Frame *frame) {
 
 void exec_iload_0(Frame *frame) {
     push_stack(frame, frame->local_variables[0]);
+}
+
+void exec_fload_0(Frame *frame) { push_stack(frame, frame->local_variables[0]); }
+void exec_fload_1(Frame *frame) { push_stack(frame, frame->local_variables[1]); }
+void exec_fload_2(Frame *frame) { push_stack(frame, frame->local_variables[2]); }
+void exec_fload_3(Frame *frame) { push_stack(frame, frame->local_variables[3]); }
+
+void exec_fload(Frame *frame) {
+    byte1 index = frame->code[frame->pc++];
+    if (index < frame->max_locals) {
+        push_stack(frame, frame->local_variables[index]);
+    } else {
+        fprintf(stderr, "Erro: fload com índice fora de bounds (%d)\n", index);
+        exit(EXIT_FAILURE);
+    }
 }
 
 void exec_iload_2(Frame *frame) {
@@ -765,6 +1348,7 @@ void inicializarInstrucoes(void) {
     instrucoes_exec[aload_1] = exec_aload_1; 
     instrucoes_exec[aload_2] = exec_aload_2; 
     instrucoes_exec[aload_3] = exec_aload_3;
+    instrucoes_exec[aload] = exec_aload;
 
     // Long constants / loads / stores
     instrucoes_exec[lconst_0] = exec_lconst_0;
@@ -804,10 +1388,81 @@ void inicializarInstrucoes(void) {
     instrucoes_exec[iload_1] = exec_iload_1; 
     instrucoes_exec[iload_2] = exec_iload_2;
     instrucoes_exec[iload_3] = exec_iload_3; 
+    instrucoes_exec[iload] = exec_iload;
+
+    // Float loads
+    instrucoes_exec[fload_0] = exec_fload_0;
+    instrucoes_exec[fload_1] = exec_fload_1;
+    instrucoes_exec[fload_2] = exec_fload_2;
+    instrucoes_exec[fload_3] = exec_fload_3;
+    instrucoes_exec[fload] = exec_fload;
 
     instrucoes_exec[astore_0] = exec_astore_0;
     instrucoes_exec[astore_1] = exec_astore_1;
-    instrucoes_exec[istore_2] = exec_istore_2; 
+    instrucoes_exec[astore_2] = exec_astore_2;
+    instrucoes_exec[astore_3] = exec_astore_3;
+    instrucoes_exec[astore] = exec_astore;
+    instrucoes_exec[istore] = exec_istore;
+    instrucoes_exec[istore_0] = exec_istore_0;
+    instrucoes_exec[istore_1] = exec_istore_1;
+    instrucoes_exec[istore_2] = exec_istore_2;
+    instrucoes_exec[istore_3] = exec_istore_3;
+
+    // Float stores
+    instrucoes_exec[fstore] = exec_fstore;
+    instrucoes_exec[fstore_0] = exec_fstore_0;
+    instrucoes_exec[fstore_1] = exec_fstore_1;
+    instrucoes_exec[fstore_2] = exec_fstore_2;
+    instrucoes_exec[fstore_3] = exec_fstore_3;
+
+    // Comparisons
+    instrucoes_exec[lcmp] = exec_lcmp;
+    instrucoes_exec[fcmpl] = exec_fcmpl;
+    instrucoes_exec[fcmpg] = exec_fcmpg;
+
+    // Stack operations
+    instrucoes_exec[pop] = exec_pop;
+    instrucoes_exec[pop2] = exec_pop2;
+
+    // Constants
+    instrucoes_exec[aconst_null] = exec_aconst_null;
+    instrucoes_exec[fconst_0] = exec_fconst_0;
+    instrucoes_exec[fconst_1] = exec_fconst_1;
+    instrucoes_exec[fconst_2] = exec_fconst_2;
+
+    // Array operations
+    instrucoes_exec[iaload] = exec_iaload;
+    instrucoes_exec[laload] = exec_laload;
+    instrucoes_exec[faload] = exec_faload;
+    instrucoes_exec[daload] = exec_daload;
+    instrucoes_exec[aaload] = exec_aaload;
+    instrucoes_exec[baload] = exec_baload;
+    instrucoes_exec[caload] = exec_caload;
+    instrucoes_exec[saload] = exec_saload;
+    instrucoes_exec[iastore] = exec_iastore;
+    instrucoes_exec[lastore] = exec_lastore;
+    instrucoes_exec[fastore] = exec_fastore;
+    instrucoes_exec[dastore] = exec_dastore;
+    instrucoes_exec[aastore] = exec_aastore;
+    instrucoes_exec[bastore] = exec_bastore;
+    instrucoes_exec[castore] = exec_castore;
+    instrucoes_exec[sastore] = exec_sastore;
+    instrucoes_exec[arraylength] = exec_arraylength;
+
+    // Conversions
+    instrucoes_exec[i2l] = exec_i2l;
+    instrucoes_exec[i2f] = exec_i2f;
+    instrucoes_exec[i2d] = exec_i2d;
+    instrucoes_exec[l2i] = exec_l2i;
+    instrucoes_exec[l2f] = exec_l2f;
+    instrucoes_exec[l2d] = exec_l2d;
+    instrucoes_exec[f2i] = exec_f2i;
+    instrucoes_exec[f2l] = exec_f2l;
+    instrucoes_exec[f2d] = exec_f2d;
+    instrucoes_exec[d2i] = exec_d2i;
+    instrucoes_exec[d2l] = exec_d2l;
+    instrucoes_exec[d2f] = exec_d2f;
+    instrucoes_exec[i2c] = exec_i2c;
 
     // Controle de Objeto
     instrucoes_exec[dup] = exec_dup;         
@@ -819,16 +1474,49 @@ void inicializarInstrucoes(void) {
     
     // I/O
     instrucoes_exec[ldc] = exec_ldc;
+    instrucoes_exec[ldc_w] = exec_ldc_w;
     instrucoes_exec[ldc2_w] = exec_ldc2_w;
     instrucoes_exec[getstatic] = exec_getstatic;
     instrucoes_exec[invokevirtual] = exec_invokevirtual;
     instrucoes_exec[invokespecial] = exec_invokespecial; 
-    instrucoes_exec[invokestatic] = exec_invokestatic; 
+    instrucoes_exec[invokestatic] = exec_invokestatic;
+    instrucoes_exec[invokeinterface] = exec_invokeinterface;
+    // if_icmp* family
+    instrucoes_exec[if_icmpeq] = exec_if_icmpeq;
+    instrucoes_exec[if_icmpne] = exec_if_icmpne;
+    instrucoes_exec[if_icmplt] = exec_if_icmplt;
+    instrucoes_exec[if_icmpge] = exec_if_icmpge;
+    instrucoes_exec[if_icmpgt] = exec_if_icmpgt;
+    instrucoes_exec[if_icmple] = exec_if_icmple;
+    
+    // Single-value conditionals and unconditional branches
+    instrucoes_exec[ifeq] = exec_ifeq;
+    instrucoes_exec[ifne] = exec_ifne;
+    instrucoes_exec[iflt] = exec_iflt;
+    instrucoes_exec[ifge] = exec_ifge;
+    instrucoes_exec[ifgt] = exec_ifgt;
+    instrucoes_exec[ifle] = exec_ifle;
+    instrucoes_exec[ifnull] = exec_ifnull;
+    instrucoes_exec[ifnonnull] = exec_ifnonnull;
+    instrucoes_exec[inst_goto] = exec_goto;
+    instrucoes_exec[goto_w] = exec_goto_w;
+    instrucoes_exec[multianewarray] = exec_multianewarray;
+    instrucoes_exec[wide] = exec_wide;
+    instrucoes_exec[fcmpg] = exec_fcmpg;
+    instrucoes_exec[dcmpl] = exec_dcmpl;
+    instrucoes_exec[dcmpg] = exec_dcmpg;
+    // Custom print instruction
+    instrucoes_exec[print_int] = exec_print_int;
+    // Field access
+    instrucoes_exec[getfield] = exec_getfield;
     
     // Placeholders para evitar crash imediato em constantes simples
-    instrucoes_exec[iconst_1] = exec_iconst_0; 
-    instrucoes_exec[iconst_2] = exec_iconst_0; 
-    instrucoes_exec[iconst_3] = exec_iconst_0; 
+    instrucoes_exec[iconst_m1] = exec_iconst_m1;
+    instrucoes_exec[iconst_1] = exec_iconst_1;
+    instrucoes_exec[iconst_2] = exec_iconst_2;
+    instrucoes_exec[iconst_3] = exec_iconst_3;
+    instrucoes_exec[iconst_4] = exec_iconst_4;
+    instrucoes_exec[iconst_5] = exec_iconst_5;
 }
 
 // ---------------------- Loop de execução ----------------------

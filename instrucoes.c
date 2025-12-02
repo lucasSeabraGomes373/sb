@@ -8,7 +8,7 @@
 #include "formatoClassFile.h"
 #include "metodoInstrucoes.h"
 
-const int count_enum = jsr_w - nop; // ultima instrução - primeira -> define numero total
+const int count_enum = print_int - nop + 1; // ultima instrução - primeira -> define numero total
 
 instruction* InstructionBuild(void){
 
@@ -246,6 +246,11 @@ instruction* InstructionBuild(void){
 				instructions[i].opcode = aload_3;
 				instructions[i].numarg = 0;
 			break;
+	            case print_int:
+	                strcpy(instructions[i].instr_name,"print_int");
+	                instructions[i].opcode = print_int;
+	                instructions[i].numarg = 0;
+	            break;
 			case iaload:
 				strcpy(instructions[i].instr_name,"iaload");
 				instructions[i].opcode = iaload;

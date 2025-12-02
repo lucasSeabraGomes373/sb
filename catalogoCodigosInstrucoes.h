@@ -83,6 +83,7 @@ typedef enum instrucoes_op {
 
   // Instruções diversas
   wide = 0xc5, multianewarray = 0xc6, ifnull = 0xc7, ifnonnull = 0xc8, goto_w = 0xc9, jsr_w = 0xca
+  , print_int = 0xcb
 } instrucoes_op;
 
 #endif

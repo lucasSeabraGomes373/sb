@@ -12,6 +12,7 @@
 #include "attributeStructs.h"
 #include "formatoClassFile.h"
 #include "metodoInstrucoes.h"
+#include "java_frontend.h"
 
 /* Assinatura dos métodos */
 byte1 byte1Read(FILE *fp);                                                                // Lê um byte do arquivo e retorna o byte1 

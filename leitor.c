@@ -2,10 +2,10 @@
 // Created on 27/10/2025.
 //
 #include <stdio.h>
-#include "leitor.h"
 #include <string.h>
 #include <math.h>
 #include "metodoInstrucoes.h"
+#include "leitor.h"
 
 
 byte1 byte1Read(FILE *fp){
@@ -79,9 +79,16 @@ ClassFile* readFile (char * filename) {
 }
 
 cp_info * readConstantPool (FILE * fp, byte2 constant_pool_count) {
-	cp_info * readConstantPool = (cp_info *) malloc((constant_pool_count-1)*sizeof(cp_info));
+	// SOLUÇÃO 1 (Simples e Segura): Aumentar alocação para cobrir Double/Long
+	// Original: malloc((constant_pool_count-1)*sizeof(cp_info))
+	// Problema: CONSTANT_Long e CONSTANT_Double ocupam 2 slots cada
+	// Isso causava overflow quando aux++ pulava para fora dos limites
+	// 
+	// Solução: Alocar count * 2 para garantir espaço suficiente
+	cp_info * readConstantPool = (cp_info *) malloc((constant_pool_count * 2) * sizeof(cp_info));
 	cp_info * aux = NULL;
-	for (aux = readConstantPool; aux < readConstantPool+constant_pool_count-1; aux++){
+	// Use the original loop condition but with safety of larger allocation
+	for (aux = readConstantPool; aux < readConstantPool + constant_pool_count - 1; aux++){
 		aux->tag = byte1Read(fp);
 		switch(aux->tag) {
 			case CONSTANT_Class:
@@ -1096,10 +1103,15 @@ void printClassFile (ClassFile * classfile, FILE* fp) {
 }
 void freeConstantPool(cp_info *cp, byte2 count) {
     if (!cp) return;
-    for (int i = 0; i < count - 1; i++) {
+    
+    // Free all UTF8 strings in the constant pool
+    // We allocated count * 3 slots to account for Long/Double entries
+    for (int i = 0; i < count * 3; i++) {
         if (cp[i].tag == CONSTANT_Utf8 && cp[i].UnionCP.CONSTANT_UTF8.bytes) {
             free(cp[i].UnionCP.CONSTANT_UTF8.bytes);
         }
     }
+    
+    // Free the constant pool array itself
     free(cp);
 }

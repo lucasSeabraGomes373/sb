@@ -132,10 +132,21 @@ int main() {
              continue;
         }
 
-        ClassFile *classFile = readFile(nomeArquivo);
-        if (classFile == NULL) {
-            fprintf(stderr, "Erro ao ler o arquivo: %s\n", nomeArquivo);
-            continue;
+        ClassFile *classFile = NULL;
+        // If a .java file was provided, use the internal frontend (no external javac)
+        if (strlen(nomeArquivo) > 5 && strcmp(nomeArquivo + strlen(nomeArquivo) - 5, ".java") == 0) {
+            // compile a limited subset of Java into an in-memory ClassFile
+            classFile = compile_java_to_classfile(nomeArquivo);
+            if (classFile == NULL) {
+                fprintf(stderr, "Erro ao compilar/parsear o arquivo .java: %s\n", nomeArquivo);
+                continue;
+            }
+        } else {
+            classFile = readFile(nomeArquivo);
+            if (classFile == NULL) {
+                fprintf(stderr, "Erro ao ler o arquivo: %s\n", nomeArquivo);
+                continue;
+            }
         }
 
         if (opcao == 1) {
