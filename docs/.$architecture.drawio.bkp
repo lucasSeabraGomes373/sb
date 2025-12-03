@@ -1,0 +1,117 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.0.3 Chrome/140.0.7339.249 Electron/38.7.0 Safari/537.36" version="29.0.3">
+  <diagram id="arch-1" name="Arquitetura Geral">
+    <mxGraphModel dx="1426" dy="841" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="main" value="Main / CLI :&#xa;Processa argumentos, inicializa ambiente e solicita carregamento do ficheiro .class para execução." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="120" y="30" width="220" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="97DLP-1zrQ3GDivSGwH5-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="leitor" target="97DLP-1zrQ3GDivSGwH5-6" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="550" y="70" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="leitor" value="Leitor / Parser :&#xa;Analisa ficheiro .class, decodifica estruturas e constrói `ClassFile` em memória." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="420" y="30" width="240" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="97DLP-1zrQ3GDivSGwH5-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="classfile" target="inits" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="classfile" value="ClassFile :&#xa;Representa estrutura da classe carregada: constant pool, fields, methods e attributes." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1eaff;strokeColor=#6c8ebf;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="520" y="180" width="300" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="cp" value="Constant Pool :&#xa;Tabela compartilhada de constantes usada para resolução de nomes, tipos e referências." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="890" y="350" width="260" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="attrs" value="Attributes &amp; Methods :&#xa;Contém métodos e atributos; code_attribute armazena bytecodes e metadados para execução." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#9ea7b0;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="530" y="360" width="280" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="inits" value="Inits / CLINIT :&#xa;Carrega dependências e executa &lt;clinit&gt; de classes antes de invocação de métodos." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d0e0f5;strokeColor=#4d79a6;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="120" y="360" width="240" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="executor" value="Executor (VM) :&#xa;Interpreta bytecodes, gere pilhas e frames, e executa operações do programa." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6f7ff;strokeColor=#3aa0d1;fontSize=12;" parent="1" vertex="1">
+          <mxGeometry x="110" y="1129" width="260" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="frames" value="Frames / Memory :&#xa;Gerencia frames de execução, operand stacks, variáveis locais e referências de objetos." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0f0f0;strokeColor=#999999;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="400" y="1300" width="320" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="output" value="Saída / Efeitos :&#xa;Produz saída visível (prints), alterações de estado e efeitos secundários do programa." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eaffea;strokeColor=#6fbf73;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="380" y="1467" width="360" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1;strokeColor=#333333;" parent="1" source="main" target="leitor" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1;strokeColor=#333333;" parent="1" source="leitor" target="classfile" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1;strokeColor=#333333;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="classfile" target="cp" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1;strokeColor=#333333;" parent="1" source="classfile" target="attrs" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1;strokeColor=#333333;" parent="1" source="inits" target="executor" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1;strokeColor=#333333;" parent="1" source="m_resolucao" target="executor" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1;strokeColor=#333333;" parent="1" source="executor" target="frames" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1;strokeColor=#333333;" parent="1" source="frames" target="output" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="note" value="Legenda:&#xa;- `main.c`: CLI e boot&#xa;- `leitor.c`: Parse .class → ClassFile&#xa;- `inits.c`: carrega deps e executa &lt;clinit&gt;&#xa;- `executorInstrucoes.c`: VM (bytecode executor)&#xa;- `frames`: pilha de execução / heap" style="whiteSpace=wrap;html=1;fontSize=11;align=left;" parent="1" vertex="1">
+          <mxGeometry x="290" y="1800" width="1320" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="97DLP-1zrQ3GDivSGwH5-6" value="Print :&#xa;Operação de saída usada pelo executor para exibir texto no ambiente do usuário." style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="1000" y="30" width="200" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="m_area" value="Área de Métodos :&#xa;Armazena metadados e code_attribute; disponibiliza informações para verificação e preparação antes da execução." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0f5ff;strokeColor=#4a76b0;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="514" y="670" width="360" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="m_invocacao" value="Invocação de Métodos :&#xa;Cria frame, inicializa locais, passa parâmetros e transfere controle ao método chamado." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f7e8;strokeColor=#4fa657;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="514" y="800" width="360" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="m_exec_byte" value="Execução de Bytecodes :&#xa;Decodifica opcodes, atualiza operand stack, manipula variáveis e controla fluxo do programa." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff0f6;strokeColor=#b05a8b;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="414" y="980" width="560" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="m_instr_cat" value="Instruções Generalizadas :&#xa;Categorias de instruções (constantes, loads, stores, aritmética, controle, invocação) tratadas pelo executor." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f7f7e6;strokeColor=#b5ad4a;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="600" y="1150" width="360" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="m_native" value="Nativo / Runtime :&#xa;Operações nativas que fornecem serviços ao runtime: I/O, chamadas ao SO e bibliotecas externas." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eef7ff;strokeColor=#4a90b0;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="1030" y="980" width="360" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1;strokeColor=#333333;" parent="1" source="m_resolucao" target="m_area" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e12" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1;strokeColor=#333333;" parent="1" source="m_area" target="m_invocacao" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e13" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1;strokeColor=#333333;" parent="1" source="m_invocacao" target="m_exec_byte" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e14" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1;strokeColor=#333333;" parent="1" source="m_exec_byte" target="executor" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e15" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1;strokeColor=#333333;" parent="1" source="m_exec_byte" target="m_instr_cat" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e16" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1;strokeColor=#333333;" parent="1" source="m_exec_byte" target="m_native" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="OXDYmYTKoXY-fkLTB819-1" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1;strokeColor=#333333;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="attrs" target="m_resolucao">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="944" y="690" as="sourcePoint" />
+            <mxPoint x="234" y="1050" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m_resolucao" value="Resolução de Métodos :&#xa;Resolve referência do método na constant pool, valida e seleciona implementação para execução." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2e6;strokeColor=#d08b3a;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="500" y="500" width="360" height="80" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
