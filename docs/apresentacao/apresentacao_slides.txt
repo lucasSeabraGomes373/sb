@@ -95,16 +95,12 @@ Note: mencionar uso anterior de sanitizers (ASan/LSan) durante desenvolvimento.
 Slide 11
 Title: Memory Management e Boas Práticas
 - Alocações: `leitor.c` cria estruturas aninhadas — cada `malloc` deve ter `free` correspondente.
-- Arquivo `MEMORY_ISSUES_REPORT.md` e implementações de `freeClassFile` cuidam de liberação recursiva.
-- Evitar double-free / use-after-free; validar ponteiros antes de liberar.
+- Arquivo com implementações de `freeClassFile` cuidam de liberação recursiva.
+- Evitar foi usado adress sanitizer para validar as estruturas de liberação.
 
 Note: mostre exemplo de free recursivo (breve) e onde foi aplicado.
 
-Slide 12
-Title: Estrutura de Código: pontos para contribuição
-- Adicionar tests automatizados para handlers complexos (`tableswitch`, `lookupswitch`, `multianewarray`).
-- Melhorar implementação de `invokespecial`/`invokestatic` (atualmente simulada).
-- Registrar e integrar funções nativas (`native` hooks) de forma segura.
+
 
 Slide 13
 Title: Como preparar a apresentação (dicas rápidas)
