@@ -30,4 +30,3 @@ monitorenter
 monitorexit
 ret
 swap
-tableswitch
