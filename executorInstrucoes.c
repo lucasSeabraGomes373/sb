@@ -842,6 +842,58 @@ void exec_goto_w(Frame *frame) {
     frame->pc += 4;
 }
 
+// TABLESWITCH (0xAA) - jump table with padding to 4-byte boundary
+void exec_tableswitch(Frame *frame) {
+    // The caller (executar) already incremented PC past the opcode,
+    // so the opcode position is at pc-1.
+    int opcode_pos = frame->pc - 1;
+
+    // compute padding so that the following data starts at a 4-byte boundary
+    int pad = (4 - (opcode_pos % 4)) % 4;
+    frame->pc += pad;
+
+    // read default, low and high (big-endian 32-bit signed)
+    uint32_t udef = ((uint32_t)frame->code[frame->pc] << 24) |
+                    ((uint32_t)frame->code[frame->pc+1] << 16) |
+                    ((uint32_t)frame->code[frame->pc+2] << 8) |
+                    ((uint32_t)frame->code[frame->pc+3]);
+    int32_t default_offset = (int32_t)udef;
+    frame->pc += 4;
+
+    uint32_t ulow = ((uint32_t)frame->code[frame->pc] << 24) |
+                    ((uint32_t)frame->code[frame->pc+1] << 16) |
+                    ((uint32_t)frame->code[frame->pc+2] << 8) |
+                    ((uint32_t)frame->code[frame->pc+3]);
+    int32_t low = (int32_t)ulow;
+    frame->pc += 4;
+
+    uint32_t uhigh = ((uint32_t)frame->code[frame->pc] << 24) |
+                    ((uint32_t)frame->code[frame->pc+1] << 16) |
+                    ((uint32_t)frame->code[frame->pc+2] << 8) |
+                    ((uint32_t)frame->code[frame->pc+3]);
+    int32_t high = (int32_t)uhigh;
+    frame->pc += 4;
+
+    int32_t npairs = high - low + 1;
+    if (npairs < 0) npairs = 0; // defensive
+
+    int index = pop_stack(frame);
+    int32_t branch_offset = default_offset;
+
+    if (index >= low && index <= high && npairs > 0) {
+        int idx = index - low;
+        // each jump offset is a 4-byte big-endian signed int
+        uint32_t uoff = ((uint32_t)frame->code[frame->pc + idx*4] << 24) |
+                        ((uint32_t)frame->code[frame->pc + idx*4 + 1] << 16) |
+                        ((uint32_t)frame->code[frame->pc + idx*4 + 2] << 8) |
+                        ((uint32_t)frame->code[frame->pc + idx*4 + 3]);
+        branch_offset = (int32_t)uoff;
+    }
+
+    // branch offsets are relative to the start of the opcode
+    frame->pc = opcode_pos + branch_offset;
+}
+
 // wide - prefix for wide index instructions
 void exec_wide(Frame *frame) {
     // In a real JVM, wide modifies the next instruction to use 2-byte indices
@@ -1523,6 +1575,7 @@ void inicializarInstrucoes(void) {
     instrucoes_exec[ifnonnull] = exec_ifnonnull;
     instrucoes_exec[inst_goto] = exec_goto;
     instrucoes_exec[goto_w] = exec_goto_w;
+    instrucoes_exec[tableswitch] = exec_tableswitch;
     instrucoes_exec[multianewarray] = exec_multianewarray;
     instrucoes_exec[wide] = exec_wide;
     instrucoes_exec[fcmpg] = exec_fcmpg;
