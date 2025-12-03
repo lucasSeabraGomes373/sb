@@ -4,7 +4,13 @@
 #include <string.h>
 #include <math.h>
 
-// Functions for decoding constant pool entries
+/*
+ * Bloco de decodificação da constant pool
+ * -------------------------------------
+ * Contém utilitários que transformam índices da constant pool em
+ * representações legíveis (por exemplo, `ClassName.methodName:desc`)
+ * e ajudam a montar strings usadas na impressão/execução.
+ */
 
 char* decodeInstructionOp(cp_info *cp,byte2 index, byte2 sizeCP){
 

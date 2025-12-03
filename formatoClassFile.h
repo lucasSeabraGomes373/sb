@@ -1,7 +1,7 @@
 //
-// Created on 27/10/2025.
+// Criado em 27/10/2025.
 //
-// Utilizamos como base do PDF "especificação do formato .class"
+// Utilizamos como base o PDF "especificação do formato .class"
 
 #ifndef	ESTRUTURACLASSFILE_H
 #define ESTRUTURACLASSFILE_H

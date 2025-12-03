@@ -1,5 +1,5 @@
 //
-// Created on 27/10/2025.
+// Criado em 27/10/2025.
 //
 #ifndef LEITOR_H
 #define LEITOR_H
@@ -14,7 +14,11 @@
 #include "metodoInstrucoes.h"
 #include "java_frontend.h"
 
-/* Assinatura dos métodos */
+/*
+ * Assinatura dos métodos públicos do leitor
+ * Cada função aqui corresponde a uma operação de leitura/decodificação
+ * ou utilitária usada por outros módulos do projeto.
+ */
 byte1 byte1Read(FILE *fp);                                                                // Lê um byte do arquivo e retorna o byte1 
 byte2 byte2Read(FILE *fp);                                                                // Lê dois byte
 byte4 byte4Read(FILE *fp);                                                                // Lê quatro bytes

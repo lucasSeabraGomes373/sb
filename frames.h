@@ -1,6 +1,6 @@
 //
-// Created by lucas on 18/11/2025.
-// Updated by Henrique on 18/11/2025
+// Criado por lucas em 18/11/2025.
+// Atualizado por Henrique em 18/11/2025.
 //
 
 #ifndef FRAME_H

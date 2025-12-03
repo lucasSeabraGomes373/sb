@@ -4,7 +4,12 @@
 #include <stdio.h>
 #include <string.h>
 
-// Functions for decoding specific attributes like Exceptions, Signature, SourceFile, and InnerClasses
+/*
+ * Decodificação de atributos específicos
+ * ------------------------------------
+ * Rotinas auxiliares que recebem atributos decodificados em memória
+ * e geram representação textual ou extraem campos específicos.
+ */
 
 void decodeExceptionsAttribute(FILE *fp, exceptions_attribute *excpAux, cp_info *constant_pool) {
     int contadorExcp = 0;

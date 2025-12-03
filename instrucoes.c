@@ -1,5 +1,5 @@
 //
-// Created on 27/10/2025.
+// Criado em 27/10/2025.
 //
 #include <stdio.h>
 #include <stdlib.h>

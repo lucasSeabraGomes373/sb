@@ -1,6 +1,24 @@
-//
-// Created on 27/10/2025.
-//
+/* Criado em 27/10/2025. */
+/*
+ * leitor.c
+ * ----------
+ * Responsável por ler e decodificar arquivos .class Java para estruturas
+ * internas em memória (`ClassFile`, `cp_info`, `method_info`, etc.).
+ *
+ * Blocos lógicos principais:
+ * - Leitura de tipos básicos (byte1/byte2/byte4)
+ * - Leitura do arquivo .class (`readFile`) que orquestra a leitura
+ *   de constant pool, interfaces, fields, methods e attributes
+ * - Leitura/decodificação da constant pool (`readConstantPool`) e
+ *   funções auxiliares para obter strings UTF8
+ * - Leitura de estruturas aninhadas: fields, methods, code attribute,
+ *   line number tables, exception tables, stack map frames, etc.
+ * - Funções de impressão (`printClassFile`) usadas para gerar saída
+ *   textual do conteúdo do class file
+ * - Funções de liberação (`free*`) que liberam toda a memória alocada.
+ *
+ * Comentários dentro do arquivo documentam cada função individualmente.
+ */
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -39,7 +57,7 @@ ClassFile* readFile (char * filename) {
 		return NULL;
 	} else {
 		classfile = (ClassFile*) malloc(sizeof(ClassFile));
-		// initialize pointer fields to NULL to avoid freeing uninitialized memory
+		// inicializa campos ponteiro com NULL para evitar liberar memória não inicializada
 		classfile->constant_pool = NULL;
 		classfile->interfaces = NULL;
 		classfile->fields = NULL;
@@ -93,7 +111,7 @@ cp_info * readConstantPool (FILE * fp, byte2 constant_pool_count) {
 	// Solução: Alocar count * 2 para garantir espaço suficiente
 	cp_info * readConstantPool = (cp_info *) malloc((constant_pool_count * 2) * sizeof(cp_info));
 	cp_info * auxiliarCp = NULL;
-	// Use the original loop condition but with safety of larger allocation
+	// Usa a condição de loop original, mas com a segurança de uma alocação maior
 	for (auxiliarCp = readConstantPool; auxiliarCp < readConstantPool + constant_pool_count - 1; auxiliarCp++){
 		auxiliarCp->tag = byte1Read(fp);
 		switch(auxiliarCp->tag) {
@@ -1111,14 +1129,14 @@ void printClassFile (ClassFile * classfile, FILE* fp) {
 void freeConstantPool(cp_info *cp, byte2 count) {
 	if (!cp) return;
 
-	// Free all UTF8 strings in the constant pool
-	// `readConstantPool` allocates `count * 2` entries to leave
-	// extra space for CONSTANT_Long and CONSTANT_Double which
-	// consume two slots each. Use the same allocation size here
-	// to avoid reading past the buffer.
-	// Only iterate over the actual constant pool entries (count-1 entries)
-	// The reader allocates a larger buffer to simplify handling LONG/DOUBLE,
-	// but only the first (count-1) entries are initialized with tags.
+	// Liberar todas as strings UTF8 na constant pool
+	// `readConstantPool` aloca `count * 2` entradas para reservar
+	// espaço extra para CONSTANT_Long e CONSTANT_Double que
+	// ocupam dois slots cada. Usamos o mesmo tamanho de alocação aqui
+	// para evitar ler além do buffer.
+	// Iterar apenas sobre as entradas reais da constant pool (count-1 entradas)
+	// O leitor aloca um buffer maior para simplificar o tratamento de LONG/DOUBLE,
+	// mas apenas as primeiras (count-1) entradas são inicializadas com tags.
 	for (int i = 0; i < (int)(count - 1); i++) {
 		if (cp[i].tag == CONSTANT_Utf8 && cp[i].UnionCP.CONSTANT_UTF8.bytes) {
 			free(cp[i].UnionCP.CONSTANT_UTF8.bytes);
@@ -1129,7 +1147,7 @@ void freeConstantPool(cp_info *cp, byte2 count) {
 	free(cp);
 }
 
-// Forward declarations for helper free functions
+// Declarações antecipadas para funções auxiliares de liberação
 static void freeAttribute(attribute_info *attr, cp_info *cp, byte2 cp_count);
 static void freeCodeAttribute(code_attribute *code_attr, cp_info *cp, byte2 cp_count);
 static void freeLineNumberTable(line_number_table *lnt);

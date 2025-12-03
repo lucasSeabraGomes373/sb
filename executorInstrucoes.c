@@ -1,7 +1,7 @@
 //
-// Created by lucas on 18/11/2025.
-// Updated by Henrique on 18/11/2025
-// Updated by Marcelo on 29/11/2025
+// Criado por lucas em 18/11/2025.
+// Atualizado por Henrique em 18/11/2025
+// Atualizado por Marcelo em 29/11/2025
 //
 
 #include <stdio.h>
@@ -17,7 +17,7 @@
 static cp_info *GLOBAL_CP = NULL;
 static byte2 GLOBAL_CP_COUNT = 0;
 
-// Simple simulated heap for storing field values (obj_ref + field_index -> int value)
+// Heap simulado simples para armazenar valores de campos (obj_ref + field_index -> int value)
 #define HEAP_STORE_CAP 512
 typedef struct { int obj_ref; unsigned short field_index; int value; } HeapEntry;
 static HeapEntry HEAP_STORE[HEAP_STORE_CAP];
