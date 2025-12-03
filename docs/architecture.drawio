@@ -13,7 +13,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="leitor" value="Nome: Leitor / Parser&#xa;Descrição: Analisa .class e decodifica estruturas para construir ClassFile em memória.&#xa;Implementado em: leitor.c, leitor.h, constantPoolDecoding.c, attributeDecoding.c" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" parent="1" vertex="1">
-          <mxGeometry x="420" y="30" width="240" height="80" as="geometry" />
+          <mxGeometry x="450" y="20" width="290" height="100" as="geometry" />
         </mxCell>
         <mxCell id="97DLP-1zrQ3GDivSGwH5-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="classfile" target="inits" edge="1">
           <mxGeometry relative="1" as="geometry" />
@@ -36,7 +36,7 @@
         <mxCell id="frames" value="Nome: Frames / Memory&#xa;Descrição: Gerencia frames de execução, operand stacks e variáveis locais.&#xa;Implementado em: frames.h, executorInstrucoes.c" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0f0f0;strokeColor=#999999;fontSize=11;" parent="1" vertex="1">
           <mxGeometry x="80" y="1300" width="320" height="120" as="geometry" />
         </mxCell>
-        <mxCell id="OXDYmYTKoXY-fkLTB819-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="output" target="OXDYmYTKoXY-fkLTB819-2">
+        <mxCell id="OXDYmYTKoXY-fkLTB819-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="output" target="OXDYmYTKoXY-fkLTB819-2" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="output" value="Nome: Saída / Efeitos&#xa;Descrição: Produz saída e efeitos colaterais do programa.&#xa;Implementado em: executorInstrucoes.c, java_frontend.c" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eaffea;strokeColor=#6fbf73;fontSize=11;" parent="1" vertex="1">
@@ -70,7 +70,7 @@
           <mxGeometry x="290" y="1800" width="1320" height="160" as="geometry" />
         </mxCell>
         <mxCell id="97DLP-1zrQ3GDivSGwH5-6" value="Nome: Print&#xa;Descrição: Operação para exibir ou salvar conteúdo textual gerado pelo executor.&#xa;Implementado em: executorInstrucoes.c, leitor.c" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-          <mxGeometry x="890" y="30" width="230" height="100" as="geometry" />
+          <mxGeometry x="880" y="15" width="260" height="110" as="geometry" />
         </mxCell>
         <mxCell id="m_area" value="Nome: Área de Métodos&#xa;Descrição: Armazena code_attribute e metadados de métodos, para verificação e preparação.&#xa;Implementado em: attributeStructs.h, leitor.c, executorInstrucoes.c" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0f5ff;strokeColor=#4a76b0;fontSize=11;" parent="1" vertex="1">
           <mxGeometry x="514" y="670" width="360" height="100" as="geometry" />
@@ -80,9 +80,6 @@
         </mxCell>
         <mxCell id="m_exec_byte" value="Nome: Execução de Bytecodes&#xa;Descrição: Decodifica e executa opcodes sequencialmente, atualizando pilha e variáveis.&#xa;Implementado em: executorInstrucoes.c, instrucoes.c" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff0f6;strokeColor=#b05a8b;fontSize=11;" parent="1" vertex="1">
           <mxGeometry x="414" y="980" width="560" height="140" as="geometry" />
-        </mxCell>
-        <mxCell id="m_native" value="Nome: Nativo / Runtime&#xa;Descrição: Integração com código nativo e serviços do SO; pontos de integração no runtime.&#xa;Implementado em: executorInstrucoes.c, utils.c" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eef7ff;strokeColor=#4a90b0;fontSize=11;" parent="1" vertex="1">
-          <mxGeometry x="1030" y="980" width="360" height="120" as="geometry" />
         </mxCell>
         <mxCell id="e11" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1;strokeColor=#333333;" parent="1" source="m_resolucao" target="m_area" edge="1">
           <mxGeometry relative="1" as="geometry" />
@@ -96,10 +93,7 @@
         <mxCell id="e14" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1;strokeColor=#333333;" parent="1" source="m_exec_byte" target="executor" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e16" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1;strokeColor=#333333;" parent="1" source="m_exec_byte" target="m_native" edge="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="OXDYmYTKoXY-fkLTB819-1" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1;strokeColor=#333333;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="attrs" target="m_resolucao">
+        <mxCell id="OXDYmYTKoXY-fkLTB819-1" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=1;strokeColor=#333333;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="attrs" target="m_resolucao" edge="1">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="944" y="690" as="sourcePoint" />
             <mxPoint x="234" y="1050" as="targetPoint" />
@@ -108,7 +102,7 @@
         <mxCell id="m_resolucao" value="Nome: Resolução de Métodos&#xa;Descrição: Resolve referência do método na constant pool, valida e seleciona implementação.&#xa;Implementado em: constantPoolDecoding.c, leitor.c" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2e6;strokeColor=#d08b3a;fontSize=11;" parent="1" vertex="1">
           <mxGeometry x="500" y="500" width="360" height="100" as="geometry" />
         </mxCell>
-        <mxCell id="OXDYmYTKoXY-fkLTB819-2" value="Limpeza :&lt;br&gt;Aplicação de Free nas estruturas alocadas." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eaffea;strokeColor=#6fbf73;fontSize=11;" vertex="1" parent="1">
+        <mxCell id="OXDYmYTKoXY-fkLTB819-2" value="Limpeza :&lt;br&gt;Aplicação de Free nas estruturas alocadas." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eaffea;strokeColor=#6fbf73;fontSize=11;" parent="1" vertex="1">
           <mxGeometry x="60" y="1610" width="360" height="100" as="geometry" />
         </mxCell>
       </root>
