@@ -26,3 +26,13 @@ $(EXEC): $(OBJ)
 clean:
 	$(RM) $(OBJ) $(EXEC)
 
+
+# AddressSanitizer (ASan) - bloco pronto para descomentar
+# Para habilitar: remova os caracteres `#` das linhas abaixo
+# CC := gcc
+# CFLAGS := -g -O1 -fno-omit-frame-pointer -fno-common -fsanitize=address
+# LDFLAGS := -fsanitize=address
+#	$(CC) $(CFLAGS) -o $(EXEC) $(SRC) $(LDFLAGS) -lm
+
+
+
