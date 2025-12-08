@@ -3,13 +3,6 @@
 
 #include "formatoClassFile.h"
 
-
-
-
-
-
-
-
 ClassFile* compile_java_to_classfile(const char *java_path);
 
 #endif

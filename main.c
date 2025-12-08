@@ -1,6 +1,5 @@
 
 
-
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,19 +8,7 @@
 #include "frames.h"
 #include "attributeStructs.h"
 
-
 #include "inits.h"
-
-
-
-
-
-
-
-
-
-
-
 
 void executarJVM(ClassFile *classFile, const char *dir_base) {
     
@@ -32,7 +19,6 @@ void executarJVM(ClassFile *classFile, const char *dir_base) {
     run_clinit_and_load_deps(classFile, dir_base);
 
     
-
 
         cp_info *entrada_classe_atual = classFile->constant_pool + classFile->this_class - 1;
         if (entrada_classe_atual->tag != CONSTANT_Class) {
@@ -122,8 +108,6 @@ void executarJVM(ClassFile *classFile, const char *dir_base) {
     free(quadro_principal.operand_stack);
     free(quadro_principal.local_variables);
 }
-
-
 
 int main() {
     char nomeArquivo[256];

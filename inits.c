@@ -1,23 +1,5 @@
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -25,7 +7,6 @@
 #include "inits.h"
 #include "executorInstrucoes.h"
 #include "frames.h"
-
 
 static char *g_initialized_classes[1024];
 static int g_initialized_count = 0;

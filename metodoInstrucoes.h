@@ -1,17 +1,8 @@
 
 
-
-
 #ifndef SB_METODOINSTRUCOES_H
 #define SB_METODOINSTRUCOES_H
 #include "catalogoCodigosInstrucoes.h"
-
-
-
-
-
-
-
 
 typedef struct instruction{
     char instr_name[50];
@@ -19,7 +10,6 @@ typedef struct instruction{
     byte1 numarg;
     int *tipoarg;
 }instruction;
-
 
 instruction* InstructionBuild(void);
 

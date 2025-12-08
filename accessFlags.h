@@ -1,7 +1,6 @@
 #ifndef ACCESS_FLAGS_H
 #define ACCESS_FLAGS_H
 
-
 enum access_flags {
     ACC_PUBLIC = 1,             
     ACC_PRIVATE = 2,            

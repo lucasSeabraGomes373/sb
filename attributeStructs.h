@@ -4,8 +4,6 @@
 #include "byteTypes.h"
 #include "constantPool.h"
 
-
-
 typedef struct attribute_info {
     byte2 attribute_name_index;
     byte4 attribute_length;
@@ -14,9 +12,6 @@ typedef struct attribute_info {
 typedef struct same_frame_extended {
     byte2 offset_delta;
 } same_frame_extended;
-
-
-
 
 typedef struct field_info {
     byte2 access_flags;
@@ -33,8 +28,6 @@ typedef struct method_info {
     byte2 attributes_count;
     attribute_info **attributes;
 } method_info;
-
-
 
 typedef struct exception_table {
     byte2 start_pc;
@@ -54,8 +47,6 @@ typedef struct code_attribute {
     attribute_info **attributes;
 } code_attribute;
 
-
-
 typedef struct line_number_tableInfo {
     byte2 start_pc;
     byte2 line_number;
@@ -66,25 +57,17 @@ typedef struct line_number_table {
     line_number_tableInfo *info;
 } line_number_table;
 
-
-
 typedef struct constantValue_attribute {
     byte2 constantvalue_index;
 } constantValue_attribute;
-
-
 
 typedef struct signature_attribute {
     byte2 signature_index;
 } signature_attribute;
 
-
-
 typedef struct source_file_attribute {
     byte2 source_file_index;
 } source_file_attribute;
-
-
 
 typedef struct classes {
     byte2 inner_class_info_index;
@@ -98,14 +81,10 @@ typedef struct innerClasses_attribute {
     classes **classes_vector;
 } innerClasses_attribute;
 
-
-
 typedef struct exceptions_attribute {
     byte2 number_of_exceptions;
     byte2 *exception_index_table;
 } exceptions_attribute;
-
-
 
 typedef struct object_variable_info {
     byte1 tag;
@@ -164,7 +143,6 @@ typedef union {
     full_frame full_frame;
 } map_frame_type_union;
 
-
 typedef struct stack_map_frame {
     byte1 frame_type;
     map_frame_type_union map_frame_type;
@@ -174,8 +152,6 @@ typedef struct stackMapTable_attribute {
     byte2 number_of_entries;
     stack_map_frame **entries; 
 } stackMapTable_attribute;
-
-
 
 #endif 
 

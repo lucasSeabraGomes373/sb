@@ -3,12 +3,6 @@
 
 #include "byteTypes.h"
 
-
-
-
-
-
-
 typedef struct cp_info {
     byte1 tag;
     union {
@@ -59,7 +53,6 @@ typedef struct cp_info {
         } CONSTANT_UTF8;
     } UnionCP;
 } cp_info;
-
 
 enum constant_pool_tags {
     CONSTANT_Class = 7,

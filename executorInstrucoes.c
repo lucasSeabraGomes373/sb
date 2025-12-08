@@ -1,9 +1,5 @@
 
 
-
-
-
-
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -13,10 +9,8 @@
 #include "leitor.h" 
 #include "catalogoCodigosInstrucoes.h" 
 
-
 static cp_info *GLOBAL_CP = NULL;
 static byte2 GLOBAL_CP_COUNT = 0;
-
 
 #define HEAP_STORE_CAP 512
 typedef struct { int obj_ref; unsigned short field_index; int value; } HeapEntry;
@@ -39,10 +33,7 @@ int create_object_ref(void) {
     return ref;
 }
 
-
 InstrucaoFunc instrucoes_exec[256];
-
-
 
 int pop_stack(Frame *frame) {
     if (frame->sp < 0) {
@@ -63,7 +54,6 @@ void push_stack(Frame *frame, int value) {
     frame->operand_stack[++frame->sp] = value;
 }
 
-
 static void push_long(Frame *frame, int64_t value) {
     int high = (int)(value >> 32);
     int low = (int)(value & 0xFFFFFFFF);
@@ -79,7 +69,6 @@ static int64_t pop_long(Frame *frame) {
     return (((int64_t)high) << 32) | lowu;
 }
 
-
 static void push_double(Frame *frame, double d) {
     int64_t bits;
     memcpy(&bits, &d, sizeof(bits));
@@ -92,8 +81,6 @@ static double pop_double(Frame *frame) {
     memcpy(&d, &bits, sizeof(d));
     return d;
 }
-
-
 
 void exec_iconst_0(Frame *frame) {
     push_stack(frame, 0);
@@ -116,8 +103,6 @@ void exec_return(Frame *frame) {
     frame->pc = frame->code_length; 
     printf("--- RETORNO do Método (RETURN) ---\n");
 }
-
-
 
 void exec_isub(Frame *frame) {
     int v2 = pop_stack(frame);
@@ -155,7 +140,6 @@ void exec_ineg(Frame *frame) {
     int v = pop_stack(frame);
     push_stack(frame, -v);
 }
-
 
 void exec_ladd(Frame *frame) {
     int64_t v2 = pop_long(frame);
@@ -199,7 +183,6 @@ void exec_lneg(Frame *frame) {
     int64_t v = pop_long(frame);
     push_long(frame, -v);
 }
-
 
 static int float_to_intbits(float f) {
     int i;
@@ -273,7 +256,6 @@ void exec_fneg(Frame *frame) {
     push_stack(frame, float_to_intbits(v));
 }
 
-
 void exec_ldc2_w(Frame *frame) {
     byte2 index = (frame->code[frame->pc] << 8) | frame->code[frame->pc+1];
     frame->pc += 2;
@@ -293,7 +275,6 @@ void exec_ldc2_w(Frame *frame) {
     }
 }
 
-
 void exec_ldc_w(Frame *frame) {
     byte2 index = (frame->code[frame->pc] << 8) | frame->code[frame->pc+1];
     frame->pc += 2;
@@ -310,12 +291,10 @@ void exec_ldc_w(Frame *frame) {
     }
 }
 
-
 void exec_print_int(Frame *frame) {
     int v = pop_stack(frame);
     printf("%d\n", v);
 }
-
 
 void exec_dadd(Frame *frame) {
     double v2 = pop_double(frame);
@@ -385,7 +364,6 @@ void exec_dstore_1(Frame *frame) { int64_t bits = pop_long(frame); frame->local_
 void exec_dstore_2(Frame *frame) { int64_t bits = pop_long(frame); frame->local_variables[2]=(int)(bits>>32); frame->local_variables[3]=(int)(bits&0xFFFFFFFF); }
 void exec_dstore_3(Frame *frame) { int64_t bits = pop_long(frame); frame->local_variables[3]=(int)(bits>>32); frame->local_variables[4]=(int)(bits&0xFFFFFFFF); }
 
-
 void exec_fconst_0(Frame *frame) { push_stack(frame, float_to_intbits(0.0f)); }
 void exec_fconst_1(Frame *frame) { push_stack(frame, float_to_intbits(1.0f)); }
 void exec_fconst_2(Frame *frame) { push_stack(frame, float_to_intbits(2.0f)); }
@@ -404,7 +382,6 @@ void exec_fstore_0(Frame *frame) { int val = pop_stack(frame); frame->local_vari
 void exec_fstore_1(Frame *frame) { int val = pop_stack(frame); frame->local_variables[1] = val; }
 void exec_fstore_2(Frame *frame) { int val = pop_stack(frame); frame->local_variables[2] = val; }
 void exec_fstore_3(Frame *frame) { int val = pop_stack(frame); frame->local_variables[3] = val; }
-
 
 void exec_lcmp(Frame *frame) {
     int64_t v2 = pop_long(frame);
@@ -458,7 +435,6 @@ void exec_dcmpg(Frame *frame) {
     else push_stack(frame, -1);
 }
 
-
 void exec_pop(Frame *frame) {
     pop_stack(frame);
 }
@@ -468,11 +444,9 @@ void exec_pop2(Frame *frame) {
     pop_stack(frame);
 }
 
-
 void exec_aconst_null(Frame *frame) {
     push_stack(frame, 0); 
 }
-
 
 void exec_arraylength(Frame *frame) {
     int arr_ref = pop_stack(frame);
@@ -595,7 +569,6 @@ void exec_dastore(Frame *frame) {
     printf("Aviso: DASTORE array Ref %d[%d] (simulação)\n", arr_ref, index);
 }
 
-
 void exec_multianewarray(Frame *frame) {
     
     int cp_idx = ((frame->code[frame->pc] << 8) | frame->code[frame->pc+1]);
@@ -612,7 +585,6 @@ void exec_multianewarray(Frame *frame) {
     (void)cp_idx;
     printf("Aviso: MULTIANEWARRAY criado com %d dimensões (simulação, push 1)\n", dimensions);
 }
-
 
 void exec_i2l(Frame *frame) {
     int v = pop_stack(frame);
@@ -682,7 +654,6 @@ void exec_i2c(Frame *frame) {
     push_stack(frame, (int)(unsigned short)v);
 }
 
-
 void exec_invokeinterface(Frame *frame) {
     byte2 index = (frame->code[frame->pc] << 8) | frame->code[frame->pc+1];
     frame->pc += 2;
@@ -691,8 +662,6 @@ void exec_invokeinterface(Frame *frame) {
     (void)index; (void)count; (void)zero;
     printf("Aviso: INVOKEINTERFACE (simulação)\n");
 }
-
-
 
 void exec_ishl(Frame *frame) {
     int v2 = pop_stack(frame);
@@ -731,9 +700,6 @@ void exec_iinc(Frame *frame) {
     frame->local_variables[index] += increment; 
 
 }
-
-
-
 
 static int16_t read_branch_offset(Frame *frame) {
     unsigned char b1 = frame->code[frame->pc++];
@@ -790,12 +756,10 @@ void exec_if_icmple(Frame *frame) {
     if (v1 <= v2) frame->pc = opcode_pos + off;
 }
 
-
 void exec_goto(Frame *frame) {
     
     frame->pc += 2;
 }
-
 
 void exec_ifeq(Frame *frame) {
     frame->pc += 2;
@@ -837,11 +801,9 @@ void exec_ifnonnull(Frame *frame) {
     pop_stack(frame);
 }
 
-
 void exec_goto_w(Frame *frame) {
     frame->pc += 4;
 }
-
 
 void exec_tableswitch(Frame *frame) {
     
@@ -894,7 +856,6 @@ void exec_tableswitch(Frame *frame) {
     frame->pc = opcode_pos + branch_offset;
 }
 
-
 void exec_wide(Frame *frame) {
     
     
@@ -911,31 +872,22 @@ void exec_wide(Frame *frame) {
     }
 }
 
-
-
-
-
-
 void exec_aload_0(Frame *frame) {
     
     push_stack(frame, frame->local_variables[0]);
 }
 
-
 void exec_iload_1(Frame *frame) {
     push_stack(frame, frame->local_variables[1]);
 }
-
 
 void exec_aload_2(Frame *frame) {
     push_stack(frame, frame->local_variables[2]);
 }
 
-
 void exec_iload_3(Frame *frame) {
     push_stack(frame, frame->local_variables[3]);
 }
-
 
 void exec_iload(Frame *frame) {
     byte1 index = frame->code[frame->pc++];
@@ -951,7 +903,6 @@ void exec_istore_2(Frame *frame) {
     int value = pop_stack(frame);
     frame->local_variables[2] = value;
 }
-
 
 void exec_istore(Frame *frame) {
     byte1 index = frame->code[frame->pc++];
@@ -979,11 +930,9 @@ void exec_istore_3(Frame *frame) {
     frame->local_variables[3] = value;
 }
 
-
 void exec_aload_3(Frame *frame) {
     push_stack(frame, frame->local_variables[3]);
 }
-
 
 void exec_aload(Frame *frame) {
     byte1 index = frame->code[frame->pc++];
@@ -995,8 +944,6 @@ void exec_aload(Frame *frame) {
     }
 }
 
-
-
 void exec_sipush(Frame *frame) {
     byte1 byte1 = frame->code[frame->pc++];
     byte2 byte2 = frame->code[frame->pc++];
@@ -1005,24 +952,16 @@ void exec_sipush(Frame *frame) {
     push_stack(frame, value);
 }
 
-
-
-
 void exec_i2b(Frame *frame) {
     int v = pop_stack(frame);
     push_stack(frame, (signed char)v);
 
 }
 
-
-
 void exec_i2s(Frame *frame) {
     int v = pop_stack(frame);
     push_stack(frame, (short)v);
 }
-
-
-
 
 void exec_putfield(Frame *frame) {
     
@@ -1091,7 +1030,6 @@ void exec_putstatic(Frame *frame) {
     free(field_ref);
 }
 
-
 void exec_invokespecial(Frame *frame) {
     byte2 index = (frame->code[frame->pc] << 8) | frame->code[frame->pc+1];
     frame->pc += 2;
@@ -1111,7 +1049,6 @@ void exec_invokespecial(Frame *frame) {
     free(method_ref);
 }
 
-
 void exec_new(Frame *frame) {
     byte2 index = (frame->code[frame->pc] << 8) | frame->code[frame->pc+1];
     frame->pc += 2;
@@ -1121,7 +1058,6 @@ void exec_new(Frame *frame) {
     push_stack(frame, ref);
     printf("--- [NEW] Criando objeto simulado Ref: %d ---\n", ref);
 }
-
 
 void exec_lconst_0(Frame *frame) {
     push_long(frame, 0LL);
@@ -1197,8 +1133,6 @@ void exec_lstore_3(Frame *frame) {
     frame->local_variables[4] = (int)(val & 0xFFFFFFFF);
 }
 
-
-
 void exec_ldc(Frame *frame) {
     byte1 index = frame->code[frame->pc++];
 
@@ -1255,7 +1189,6 @@ void exec_astore_3(Frame *frame) {
     int ref = pop_stack(frame);
     frame->local_variables[3] = ref;
 }
-
 
 void exec_astore(Frame *frame) {
     byte1 index = frame->code[frame->pc++];
@@ -1330,8 +1263,6 @@ void exec_invokestatic(Frame *frame) {
     
 }
 
-
-
 void inicializarAmbiente(ClassFile *classFile) {
     GLOBAL_CP = classFile->constant_pool;
     GLOBAL_CP_COUNT = classFile->constant_pool_count;
@@ -1364,8 +1295,6 @@ code_attribute* getMethodCode(ClassFile *classFile, const char* name, const char
     }
     return NULL;
 }
-
-
 
 void inicializarInstrucoes(void) {
     for (int i = 0; i < 256; i++) {
@@ -1415,8 +1344,6 @@ void inicializarInstrucoes(void) {
 
     
     instrucoes_exec[sipush] = exec_sipush;
-
-
 
     
     instrucoes_exec[aload_0] = exec_aload_0; 
@@ -1594,8 +1521,6 @@ void inicializarInstrucoes(void) {
     instrucoes_exec[iconst_4] = exec_iconst_4;
     instrucoes_exec[iconst_5] = exec_iconst_5;
 }
-
-
 
 void executar(Frame *frame) {
     while (frame->pc < frame->code_length) {

@@ -1,30 +1,10 @@
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include "metodoInstrucoes.h"
 #include "leitor.h"
-
 
 byte1 byte1Read(FILE *fp){
     byte1 byte;
@@ -290,8 +270,6 @@ char* decodeCode(cp_info *cp, byte2 sizeCP, byte1 *code, byte4 length, instructi
     return retorno;
 }
 
-
-
 char* getUtf8FromConstantPool(cp_info *cp, byte2 index, byte2 sizeCP) {
     if (index >= sizeCP) return NULL;
     if (cp[index].tag != CONSTANT_Utf8) return NULL;
@@ -323,13 +301,6 @@ void freeMethod(method_info method) {
         free(method.attributes);
     }
 }
-
-
-
-
-
-
-
 
 code_attribute * readCode (FILE * fp, cp_info *cp) {
 	code_attribute * code_attributes = NULL;
@@ -613,7 +584,6 @@ char* searchNameTag(byte1 tag){
 	return(nometag);
 }
 
-
 void printClassFile (ClassFile * classfile, FILE* fp) {
 	if(fp == NULL)
 		return;
@@ -642,7 +612,6 @@ void printClassFile (ClassFile * classfile, FILE* fp) {
 	fprintf(fp, "Fields Count: 		%d\n",classfile->fields_count);
 	fprintf(fp, "Methods Count: 		%d\n",classfile->methods_count);
 	fprintf(fp, "Atributes Count: 	%d\n",classfile->attributes_count);
-
 
 	fprintf(fp, "\n\n   --------------------  Constant Pool   --------------------  \n\n");
 
@@ -1146,7 +1115,6 @@ void freeConstantPool(cp_info *cp, byte2 count) {
 	
 	free(cp);
 }
-
 
 static void freeAttribute(attribute_info *attr, cp_info *cp, byte2 cp_count);
 static void freeCodeAttribute(code_attribute *code_attr, cp_info *cp, byte2 cp_count);

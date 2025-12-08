@@ -1,11 +1,9 @@
 
 
-
 #ifndef INSTRUCOES_H
 #define INSTRUCOES_H
 
 #include "byteTypes.h"
-
 
 typedef enum instrucoes_op {
   

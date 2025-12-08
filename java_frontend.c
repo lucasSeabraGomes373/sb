@@ -11,15 +11,6 @@
 #include "constantPool.h"
 #include "attributeStructs.h"
 
-
-
-
-
-
-
-
-
-
 typedef struct {
     unsigned char *data;
     size_t len;
@@ -29,9 +20,6 @@ static void bb_init(ByteBuf *b){ b->data = NULL; b->len = 0; }
 static void bb_emit(ByteBuf *b, unsigned char v){ b->data = realloc(b->data, b->len+1); b->data[b->len++] = v; }
 static void bb_emitu2(ByteBuf *b, unsigned short v){ bb_emit(b, (v>>8)&0xFF); bb_emit(b, v&0xFF); }
 
-
-
-
 typedef struct {
     const char *s;
     size_t i;
@@ -40,7 +28,6 @@ typedef struct {
 static void skip_ws(Parser *p){ while (isspace((unsigned char)p->s[p->i])) p->i++; }
 
 static int is_ident_char(char c){ return isalnum((unsigned char)c) || c=='_' ; }
-
 
 static int emit_expr(Parser *p, ByteBuf *code, char **locals, int *local_count);
 
@@ -67,17 +54,14 @@ static int parse_number(Parser *p, int *out) {
 
 static int parse_ident(Parser *p, char *buf, size_t buf_sz){ skip_ws(p); size_t start = p->i; if (!isalpha((unsigned char)p->s[p->i]) && p->s[p->i]!='_') return 0; p->i++; while(is_ident_char(p->s[p->i])) p->i++; size_t len = p->i - start; if (len+1 > buf_sz) return 0; memcpy(buf, p->s+start, len); buf[len]='\0'; return 1; }
 
-
 static void emit_push_int(ByteBuf *code, int val){ if (val >= -128 && val <= 127){ bb_emit(code, 0x10); bb_emit(code, (unsigned char)val); } else if (val >= -32768 && val <= 32767){ bb_emit(code, 0x11); bb_emitu2(code, (unsigned short)val); } else { 
         bb_emit(code, 0x10); bb_emit(code, (unsigned char)(val & 0xFF)); } }
-
 
 static int get_local_index(char **locals, int *local_count, const char *name){ for (int i=0;i<*local_count;i++) if (strcmp(locals[i], name)==0) return i+1; 
     
     locals[*local_count] = strdup(name);
     (*local_count)++;
     return *local_count; }
-
 
 static int emit_factor(Parser *p, ByteBuf *code, char **locals, int *local_count){ skip_ws(p);
     if (p->s[p->i]=='('){ p->i++; emit_expr(p, code, locals, local_count); skip_ws(p); if (p->s[p->i]==')') p->i++; return 1; }
@@ -95,12 +79,9 @@ static int emit_factor(Parser *p, ByteBuf *code, char **locals, int *local_count
     }
     return 0; }
 
-
 static int emit_term(Parser *p, ByteBuf *code, char **locals, int *local_count){ if (!emit_factor(p, code, locals, local_count)) return 0; while(1){ skip_ws(p); char op = p->s[p->i]; if (op=='*' || op=='/' || op=='%'){ p->i++; emit_factor(p, code, locals, local_count); if (op=='*') bb_emit(code, 0x68); else if (op=='/') bb_emit(code, 0x6c); else bb_emit(code, 0x70); } else break; } return 1; }
 
-
 static int emit_expr(Parser *p, ByteBuf *code, char **locals, int *local_count){ if (!emit_term(p, code, locals, local_count)) return 0; while(1){ skip_ws(p); char op = p->s[p->i]; if (op=='+'||op=='-'){ p->i++; emit_term(p, code, locals, local_count); if (op=='+') bb_emit(code, 0x60); else bb_emit(code, 0x64); } else break; } return 1; }
-
 
 static void trim(char *s){ char *p=s; while(isspace((unsigned char)*p)) p++; memmove(s,p,strlen(p)+1); while(strlen(s)>0 && isspace((unsigned char)s[strlen(s)-1])) s[strlen(s)-1]='\0'; }
 

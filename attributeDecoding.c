@@ -4,13 +4,6 @@
 #include <stdio.h>
 #include <string.h>
 
-
-
-
-
-
-
-
 void decodeExceptionsAttribute(FILE *fp, exceptions_attribute *excpAux, cp_info *constant_pool) {
     int contadorExcp = 0;
     char *exceptionIndexString;

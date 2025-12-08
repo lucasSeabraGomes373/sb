@@ -1,8 +1,5 @@
 
 
-
-
-
 #ifndef	ESTRUTURACLASSFILE_H
 #define ESTRUTURACLASSFILE_H
 

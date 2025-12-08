@@ -4,14 +4,6 @@
 #include <string.h>
 #include <math.h>
 
-
-
-
-
-
-
-
-
 char* decodeInstructionOp(cp_info *cp,byte2 index, byte2 sizeCP){
 
 	char *retorno = malloc(100*sizeof(char));
@@ -20,7 +12,6 @@ char* decodeInstructionOp(cp_info *cp,byte2 index, byte2 sizeCP){
 	char *stringGeral;
 	char *ponteiro2pontos;
 	cp_info *cp_aux = cp+index-1;
-
 
 	if (index < sizeCP) {
 		switch(cp_aux->tag){
@@ -32,7 +23,6 @@ char* decodeInstructionOp(cp_info *cp,byte2 index, byte2 sizeCP){
 
 				ponteiro2pontos = strchr(stringNomeMetodo,':');
 				*ponteiro2pontos = '\0';
-
 
 				strcpy(retorno,"<");
 				strcat(retorno,stringNomeClasse);
@@ -79,7 +69,6 @@ char* decodeInstructionOp(cp_info *cp,byte2 index, byte2 sizeCP){
 	return(retorno);
 }
 
-
 char* decodeAccessFlags(byte2 flag) {
 	char *retorno = malloc(256 * sizeof(char));
 	if (!retorno) return NULL;
@@ -102,7 +91,6 @@ char* decodeAccessFlags(byte2 flag) {
 
 	return retorno;
 }
-
 
 char* organizingFlags(char* flagsOrdemInversa) {
 	if (!flagsOrdemInversa) return strdup("");
@@ -134,7 +122,6 @@ double decodeDoubleInfo(cp_info *cp) {
 	return value;
 }
 
-
 uint64_t decodeLongInfo (cp_info * cp) {
 	return ((((uint64_t)cp->UnionCP.CONSTANT_Long.high_bytes)<<32) | ((uint64_t)cp->UnionCP.CONSTANT_Long.low_bytes));
 }
@@ -153,8 +140,6 @@ float decodeFloatInfo(cp_info *cp) {
 
 	return sinal * mant * pow(2, expon - 150);
 }
-
-
 
 char* decodeNIeNT(cp_info *cp, byte2 index, byte1 tipo) {
 	cp_info *entradaCp = cp + index - 1;
@@ -186,8 +171,6 @@ char* decodeNIeNT(cp_info *cp, byte2 index, byte1 tipo) {
 
 	return strdup("undefined");
 }
-
-
 
 char* decodeStringUTF8(cp_info *cp) {
 	if (cp == NULL || cp->UnionCP.CONSTANT_UTF8.bytes == NULL || cp->UnionCP.CONSTANT_UTF8.length == 0) {

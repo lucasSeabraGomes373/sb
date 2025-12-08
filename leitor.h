@@ -1,6 +1,5 @@
 
 
-
 #ifndef LEITOR_H
 #define LEITOR_H
 
@@ -14,15 +13,9 @@
 #include "metodoInstrucoes.h"
 #include "java_frontend.h"
 
-
-
-
-
-
 byte1 byte1Read(FILE *fp);                                                                
 byte2 byte2Read(FILE *fp);                                                                
 byte4 byte4Read(FILE *fp);                                                                
-
 
 ClassFile * readFile(char *);                                                       
 cp_info * readConstantPool(FILE * fp, byte2 constantpoolcount);                        

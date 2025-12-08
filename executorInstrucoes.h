@@ -1,8 +1,5 @@
 
 
-
-
-
 #ifndef EXECUTOR_INSTRUCOES_H
 #define EXECUTOR_INSTRUCOES_H
 
@@ -11,17 +8,6 @@
 #include "formatoClassFile.h"
 
 #define SYSTEM_OUT_REF 0xCAFE 
-
-
-
-
-
-
-
-
-
-
-
 
 typedef void (*InstrucaoFunc)(Frame *frame);
 extern InstrucaoFunc instrucoes_exec[256];

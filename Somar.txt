@@ -12,7 +12,6 @@ Fields Count: 		1
 Methods Count: 		1
 Atributes Count: 	1
 
-
    --------------------  Constant Pool   --------------------  
 
 >>> [01] CONSTANT_Class_Info
@@ -62,10 +61,7 @@ Length of byte array:	16
 Length of string:	16
 String:			java/lang/Object
 
-
    --------------------  Interfaces     --------------------
-
-
 
    --------------------  Fields   --------------------  
 
@@ -79,7 +75,6 @@ Attribute Name Index: 	cp_info#5 <ConstantValue>
 Attribute Length: 		2
 Constant Value Index: 		cp_info#6 <3.141500>
 
-
    --------------------   Methods    -------------------- 
 
 [>>> [0] Method
@@ -89,8 +84,6 @@ Descriptor: 		cp_info#9 <(II)I>
 Access Flags: 		0x0401 [PUBLIC; ABSTRACT; ]
 
 Attributes Count: 	0
-
-
 
      Attributes     
 

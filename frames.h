@@ -1,14 +1,10 @@
 
 
-
-
-
 #ifndef FRAME_H
 #define FRAME_H
 
 #include "byteTypes.h"
 #include "constantPool.h"
-
 
 typedef struct {
     byte4 pc;                  
@@ -20,7 +16,6 @@ typedef struct {
     int *local_variables;      
     int sp;                    
 } Frame;
-
 
 typedef struct {
     Frame *current_frame;      

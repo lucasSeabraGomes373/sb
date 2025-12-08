@@ -269,7 +269,6 @@ Isso gera o executável da JVM, por exemplo:
 
 javac Teste.java
 
-
 O arquivo `.class` resultante pode ser movido para `exemplos/` ou usado diretamente.
 
 2. **Executar o `.class` usando a JVM educacional**:
@@ -316,5 +315,4 @@ Esta JVM educacional em C reúne, em um único projeto, os elementos essenciais 
 - **interpretador de bytecode** baseado em pilha.
 
 Com isso, ela serve tanto como ferramenta de estudo de **arquitetura de VMs e execução de bytecode**, quanto como base para experimentos e extensões que aproximam o modelo de uma JVM completa, sem perder a clareza e simplicidade necessárias para fins didáticos.
-
 
