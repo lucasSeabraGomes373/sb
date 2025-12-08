@@ -4,13 +4,13 @@
 #include <string.h>
 #include <math.h>
 
-/*
- * Bloco de decodificação da constant pool
- * -------------------------------------
- * Contém utilitários que transformam índices da constant pool em
- * representações legíveis (por exemplo, `ClassName.methodName:desc`)
- * e ajudam a montar strings usadas na impressão/execução.
- */
+
+
+
+
+
+
+
 
 char* decodeInstructionOp(cp_info *cp,byte2 index, byte2 sizeCP){
 
@@ -112,7 +112,7 @@ char* organizingFlags(char* flagsOrdemInversa) {
 	char *temp;
 
 	while (token) {
-		temp = malloc(strlen(result) + strlen(token) + 2); // espaço + '\0'
+		temp = malloc(strlen(result) + strlen(token) + 2); 
 		if (!temp) {
 			free(result);
 			return NULL;
@@ -171,7 +171,7 @@ char* decodeNIeNT(cp_info *cp, byte2 index, byte1 tipo) {
 
 			char *nome = decodeStringUTF8(entradaCp2);
 			char *desc = decodeStringUTF8(entradaCp3);
-			char *retorno = malloc(strlen(nome) + strlen(desc) + 2); // +1 for ':' +1 for '\0'
+			char *retorno = malloc(strlen(nome) + strlen(desc) + 2); 
 
 			if (!retorno) return NULL;
 			sprintf(retorno, "%s:%s", nome, desc);
@@ -191,7 +191,7 @@ char* decodeNIeNT(cp_info *cp, byte2 index, byte1 tipo) {
 
 char* decodeStringUTF8(cp_info *cp) {
 	if (cp == NULL || cp->UnionCP.CONSTANT_UTF8.bytes == NULL || cp->UnionCP.CONSTANT_UTF8.length == 0) {
-		return strdup(""); // retorna string vazia segura
+		return strdup(""); 
 	}
 
 	char* retorno = malloc((cp->UnionCP.CONSTANT_UTF8.length + 1) * sizeof(char));

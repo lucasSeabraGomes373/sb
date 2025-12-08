@@ -3,12 +3,12 @@
 
 #include "byteTypes.h"
 
-/*
- * Estrutura da Constant Pool e tags
- * --------------------------------
- * `cp_info` representa uma entrada da constant pool do Java ClassFile.
- * A union `UnionCP` armazena diferentes formas conforme o `tag`.
- */
+
+
+
+
+
+
 typedef struct cp_info {
     byte1 tag;
     union {
@@ -60,7 +60,7 @@ typedef struct cp_info {
     } UnionCP;
 } cp_info;
 
-// Tags da constant pool (constantes usadas no campo `tag`)
+
 enum constant_pool_tags {
     CONSTANT_Class = 7,
     CONSTANT_Fieldref = 9,
@@ -78,4 +78,4 @@ enum constant_pool_tags {
     CONSTANT_InvokeDynamic = 18
 };
 
-#endif // CONSTANT_POOL_H
+#endif 

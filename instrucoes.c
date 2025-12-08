@@ -1,6 +1,6 @@
-//
-// Criado em 27/10/2025.
-//
+
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,18 +8,18 @@
 #include "formatoClassFile.h"
 #include "metodoInstrucoes.h"
 
-const int count_enum = print_int - nop + 1; // ultima instrução - primeira -> define numero total
+const int count_enum = print_int - nop + 1; 
 
 instruction* InstructionBuild(void){
 
-	instruction *instructions = malloc(count_enum*sizeof(instruction)); // Alocação de memória para todas as instruções
+	instruction *instructions = malloc(count_enum*sizeof(instruction)); 
 
 	for (int i = 0;i<count_enum;i++){
-		switch(i){          // Case switch para definir o opcode, argumento e nome de cada instrução
+		switch(i){          
 			case nop:
-				strcpy(instructions[i].instr_name,"nop"); // O i define o numero da instrução e o que segue ele (.instr_name) é o nome dentro da struct
-				instructions[i].opcode = nop; // Opcode não usado agora, será usado futuramente na jvm. 
-				instructions[i].numarg = 0; // Usado na função decodificarCode para gerar um switch case e definir as operações que precisam ser aplicadas para ser funcional
+				strcpy(instructions[i].instr_name,"nop"); 
+				instructions[i].opcode = nop; 
+				instructions[i].numarg = 0; 
 			break;
 			case aconst_null:
 				strcpy(instructions[i].instr_name,"aconst_null");

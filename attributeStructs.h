@@ -4,7 +4,7 @@
 #include "byteTypes.h"
 #include "constantPool.h"
 
-// -------------------- Estruturas de atributos genéricos --------------------
+
 
 typedef struct attribute_info {
     byte2 attribute_name_index;
@@ -16,7 +16,7 @@ typedef struct same_frame_extended {
 } same_frame_extended;
 
 
-// -------------------- Campos e métodos --------------------
+
 
 typedef struct field_info {
     byte2 access_flags;
@@ -34,7 +34,7 @@ typedef struct method_info {
     attribute_info **attributes;
 } method_info;
 
-// -------------------- Code e exceções --------------------
+
 
 typedef struct exception_table {
     byte2 start_pc;
@@ -54,7 +54,7 @@ typedef struct code_attribute {
     attribute_info **attributes;
 } code_attribute;
 
-// -------------------- LineNumberTable --------------------
+
 
 typedef struct line_number_tableInfo {
     byte2 start_pc;
@@ -66,25 +66,25 @@ typedef struct line_number_table {
     line_number_tableInfo *info;
 } line_number_table;
 
-// -------------------- ConstantValue --------------------
+
 
 typedef struct constantValue_attribute {
     byte2 constantvalue_index;
 } constantValue_attribute;
 
-// -------------------- Signature --------------------
+
 
 typedef struct signature_attribute {
     byte2 signature_index;
 } signature_attribute;
 
-// -------------------- SourceFile --------------------
+
 
 typedef struct source_file_attribute {
     byte2 source_file_index;
 } source_file_attribute;
 
-// -------------------- InnerClasses --------------------
+
 
 typedef struct classes {
     byte2 inner_class_info_index;
@@ -98,14 +98,14 @@ typedef struct innerClasses_attribute {
     classes **classes_vector;
 } innerClasses_attribute;
 
-// -------------------- Exceptions --------------------
+
 
 typedef struct exceptions_attribute {
     byte2 number_of_exceptions;
     byte2 *exception_index_table;
 } exceptions_attribute;
 
-// -------------------- StackMapTable --------------------
+
 
 typedef struct object_variable_info {
     byte1 tag;
@@ -172,10 +172,10 @@ typedef struct stack_map_frame {
 
 typedef struct stackMapTable_attribute {
     byte2 number_of_entries;
-    stack_map_frame **entries; // ← deve ser ponteiro para ponteiro
+    stack_map_frame **entries; 
 } stackMapTable_attribute;
 
 
 
-#endif // ATTRIBUTE_STRUCTS_H
+#endif 
 

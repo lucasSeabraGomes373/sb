@@ -1,6 +1,6 @@
-//
-// Criado em 27/10/2025.
-//
+
+
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,28 +12,28 @@
 
 #include "inits.h"
 
-/*
- * executarJVM
- * -------------
- * Inicializa o ambiente da JVM para uma `ClassFile` já lida e executa
- * o método de entrada escolhido (preferência por `main`, senão
- * tenta construtores conhecidos). Fluxo principal:
- * 1. Inicializa instruções e ambiente
- * 2. Garante execução de <clinit> desta classe e de dependências
- * 3. Seleciona o método a executar (main / construtor)
- * 4. Cria o Frame inicial, executa e libera recursos do frame
- */
+
+
+
+
+
+
+
+
+
+
+
 void executarJVM(ClassFile *classFile, const char *dir_base) {
-    // Inicialização do Ambiente
+    
     inicializarInstrucoes();
     inicializarAmbiente(classFile);
 
-    // Garantir que inicializadores estáticos desta classe e de dependências sejam executados
+    
     run_clinit_and_load_deps(classFile, dir_base);
 
-    /* 1) Decodificar o nome desta classe a partir da constant pool.
-     *    Usamos esse nome para escolha de construtores
-     *    e para mensagens de debug. */
+    
+
+
         cp_info *entrada_classe_atual = classFile->constant_pool + classFile->this_class - 1;
         if (entrada_classe_atual->tag != CONSTANT_Class) {
             fprintf(stderr, "Erro: Índice this_class (%d) não aponta para CONSTANT_Class.\n", classFile->this_class);
@@ -45,13 +45,13 @@ void executarJVM(ClassFile *classFile, const char *dir_base) {
         const char *nome_metodo_a_executar = NULL;
         int eh_construtor = 0;
 
-    // 1. Tenta main
+    
     codigo_metodo = getMethodCode(classFile, "main", "([Ljava/lang/String;)V");
     if (codigo_metodo != NULL) {
         nome_metodo_a_executar = "main";
     }
 
-    // 2. Construtores específicos
+    
     if (codigo_metodo == NULL) {
            if (strcmp(nome_classe_atual, "Carta") == 0) {
                codigo_metodo = getMethodCode(classFile, "<init>", "(ILjava/lang/String;I)V");
@@ -62,7 +62,7 @@ void executarJVM(ClassFile *classFile, const char *dir_base) {
         }
     }
 
-    // 3. Construtor padrão
+    
     if (codigo_metodo == NULL) {
         codigo_metodo = getMethodCode(classFile, "<init>", "()V");
         if (codigo_metodo != NULL) {
@@ -81,7 +81,7 @@ void executarJVM(ClassFile *classFile, const char *dir_base) {
 
     free(nome_classe_atual);
 
-    // 2. Criar o Frame inicial
+    
         Frame quadro_principal;
         quadro_principal.pc = 0;
         quadro_principal.max_stack = codigo_metodo->max_stack;
@@ -145,9 +145,9 @@ int main() {
     }
 
     ClassFile *classFile = NULL;
-    // If a .java file was provided, use the internal frontend (no external javac)
+    
     if (strlen(nomeArquivo) > 5 && strcmp(nomeArquivo + strlen(nomeArquivo) - 5, ".java") == 0) {
-        // compilar um subconjunto limitado de Java em um ClassFile na memória
+        
         classFile = compile_java_to_classfile(nomeArquivo);
         if (classFile == NULL) {
             fprintf(stderr, "Erro ao compilar/parsear o arquivo .java: %s\n", nomeArquivo);

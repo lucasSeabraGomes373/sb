@@ -3,12 +3,12 @@
 
 #include <stdint.h>
 
-typedef uint8_t byte1;     // 1 byte (8 bits)
-typedef uint16_t byte2;    // 2 bytes (16 bits)
-typedef uint32_t byte4;    // 4 bytes (32 bits)
+typedef uint8_t byte1;     
+typedef uint16_t byte2;    
+typedef uint32_t byte4;    
 
-#define MAX_BYTE1 255           // Maximum value for uint8_t
-#define MAX_BYTE2 65535         // Maximum value for uint16_t
-#define MAX_BYTE4 2147483647    // Maximum value for uint32_t
+#define MAX_BYTE1 255           
+#define MAX_BYTE2 65535         
+#define MAX_BYTE4 2147483647    
 
-#endif // BYTE_TYPES_H
+#endif 

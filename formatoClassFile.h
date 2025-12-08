@@ -1,7 +1,7 @@
-//
-// Criado em 27/10/2025.
-//
-// Utilizamos como base o PDF "especificação do formato .class"
+
+
+
+
 
 #ifndef	ESTRUTURACLASSFILE_H
 #define ESTRUTURACLASSFILE_H
@@ -11,24 +11,24 @@
 #include "accessFlags.h"
 #include "attributeStructs.h"
 	
-//Estrutura ClassFile
+
 typedef struct{
 	byte4 				magic;
 	byte2 				minor_version;
 	byte2 				major_version;
 	byte2 				constant_pool_count;
-	cp_info 		*constant_pool;          // [constant_pool_count-1] 
+	cp_info 		*constant_pool;          
 	byte2 				access_flags;
 	byte2 				this_class;
 	byte2 				super_class;
 	byte2 				interfaces_count;
-	byte2 				*interfaces;	        // [interfaces_count] 
+	byte2 				*interfaces;	        
 	byte2 				fields_count;
-	field_info 		*fields;		        // [fileds_count] 
+	field_info 		*fields;		        
 	byte2 				methods_count;
-	method_info 	*methods;		        // [methods_count] 
+	method_info 	*methods;		        
 	byte2 				attributes_count;
-	attribute_info ** attributes;           // [attributes_count] 
+	attribute_info ** attributes;           
 }ClassFile;
 
 #endif

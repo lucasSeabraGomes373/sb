@@ -1,24 +1,24 @@
-/* Criado em 27/10/2025. */
-/*
- * leitor.c
- * ----------
- * Responsável por ler e decodificar arquivos .class Java para estruturas
- * internas em memória (`ClassFile`, `cp_info`, `method_info`, etc.).
- *
- * Blocos lógicos principais:
- * - Leitura de tipos básicos (byte1/byte2/byte4)
- * - Leitura do arquivo .class (`readFile`) que orquestra a leitura
- *   de constant pool, interfaces, fields, methods e attributes
- * - Leitura/decodificação da constant pool (`readConstantPool`) e
- *   funções auxiliares para obter strings UTF8
- * - Leitura de estruturas aninhadas: fields, methods, code attribute,
- *   line number tables, exception tables, stack map frames, etc.
- * - Funções de impressão (`printClassFile`) usadas para gerar saída
- *   textual do conteúdo do class file
- * - Funções de liberação (`free*`) que liberam toda a memória alocada.
- *
- * Comentários dentro do arquivo documentam cada função individualmente.
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -57,7 +57,7 @@ ClassFile* readFile (char * filename) {
 		return NULL;
 	} else {
 		classfile = (ClassFile*) malloc(sizeof(ClassFile));
-		// inicializa campos ponteiro com NULL para evitar liberar memória não inicializada
+		
 		classfile->constant_pool = NULL;
 		classfile->interfaces = NULL;
 		classfile->fields = NULL;
@@ -103,15 +103,15 @@ ClassFile* readFile (char * filename) {
 }
 
 cp_info * readConstantPool (FILE * fp, byte2 constant_pool_count) {
-	// SOLUÇÃO 1 (Simples e Segura): Aumentar alocação para cobrir Double/Long
-	// Original: malloc((constant_pool_count-1)*sizeof(cp_info))
-	// Problema: CONSTANT_Long e CONSTANT_Double ocupam 2 slots cada
-	// Isso causava overflow quando aux++ pulava para fora dos limites
-	// 
-	// Solução: Alocar count * 2 para garantir espaço suficiente
+	
+	
+	
+	
+	
+	
 	cp_info * readConstantPool = (cp_info *) malloc((constant_pool_count * 2) * sizeof(cp_info));
 	cp_info * auxiliarCp = NULL;
-	// Usa a condição de loop original, mas com a segurança de uma alocação maior
+	
 	for (auxiliarCp = readConstantPool; auxiliarCp < readConstantPool + constant_pool_count - 1; auxiliarCp++){
 		auxiliarCp->tag = byte1Read(fp);
 		switch(auxiliarCp->tag) {
@@ -242,7 +242,7 @@ char* decodeCode(cp_info *cp, byte2 sizeCP, byte1 *code, byte4 length, instructi
 		byte1 opcode = *ponteiroCodigo;
 		int numarg = instrucoes[opcode].numarg;
 
-        // Estimar espaço necessário para a próxima instrução
+        
         int espaco_necessario = 128;
         if (offset + espaco_necessario >= capacidade) {
             capacidade += RETORNO_INCREMENTO;
@@ -308,17 +308,17 @@ char* getUtf8FromConstantPool(cp_info *cp, byte2 index, byte2 sizeCP) {
 void freeMethod(method_info method) {
     for (int i = 0; i < method.attributes_count; i++) {
         if (method.attributes[i] != NULL) {
-            // Libera o conteúdo de info, se tiver sido alocado
+            
             if (method.attributes[i]->info != NULL) {
                 free(method.attributes[i]->info);
             }
 
-            // Libera o próprio atributo
+            
             free(method.attributes[i]);
         }
     }
 
-    // Libera o vetor de ponteiros para atributos
+    
     if (method.attributes != NULL) {
         free(method.attributes);
     }
@@ -626,7 +626,7 @@ void printClassFile (ClassFile * classfile, FILE* fp) {
 	attribute_info ** atributosCampo;
 	exception_table * tabelaExcecaoAux;
 	uint32_t contador = 1;
-	// byte1 * auxBytesCode;
+	
 	char *ponteiroprint;
 
 	instruction *instrucoes = InstructionBuild();
@@ -776,19 +776,19 @@ void printClassFile (ClassFile * classfile, FILE* fp) {
 				if (strcmp(ponteiroprint, "ConstantValue") == 0) {
 					constantValue_attribute * cvAux = (constantValue_attribute*)(*(atributosCampo+posicaoFields))->info;
 					cp_info * cpInfoAux = classfile->constant_pool-1+cvAux->constantvalue_index;
-					//FLOAT
+					
 					if (cpInfoAux->tag == 4) {
 						float valorCV = decodeFloatInfo(classfile->constant_pool-1+cvAux->constantvalue_index);
 						fprintf(fp, "Constant Value Index: 		cp_info#%d <%f>\n",cvAux->constantvalue_index,valorCV);
-					//Integer-Byte-Boolean-Short-Char
+					
 					} else if (cpInfoAux->tag == 3) {
 						int valorRetorno = decodeIntegerInfo (classfile->constant_pool-1+cvAux->constantvalue_index);
 						fprintf(fp, "Constant Value Index: 		cp_info#%d <%d>\n",cvAux->constantvalue_index,valorRetorno);
-					//STRING
+					
 					} else if (cpInfoAux->tag == 8) {
 						char * stringEntrada = decodeNIeNT(classfile->constant_pool,cvAux->constantvalue_index,1);
 						fprintf(fp, "Constant Value Index: 		cp_info#%d <%s>\n",cvAux->constantvalue_index,stringEntrada);
-					//DOUBLE
+					
 					} else if (cpInfoAux->tag == 6) {
 						double valorDB = decodeDoubleInfo(classfile->constant_pool-1+cvAux->constantvalue_index);
 						fprintf(fp, "Constant Value Index: 		cp_info#%d <%lf>\n",cvAux->constantvalue_index,valorDB);
@@ -822,7 +822,7 @@ void printClassFile (ClassFile * classfile, FILE* fp) {
 		fprintf(fp, "Access Flags: 		0x%04x [%s]\n",metodoAuxiliar->access_flags,ponteiroprint);
 		fprintf(fp, "\nAttributes Count: 	%d\n\n",metodoAuxiliar->attributes_count);
 
-		//fprintf(fp, "Atributos:\n");
+		
 		attribute_info ** atributosMetodo = metodoAuxiliar->attributes;
 		for (int posicao = 0; posicao < metodoAuxiliar->attributes_count; posicao++) {
             free(ponteiroprint);
@@ -1129,25 +1129,25 @@ void printClassFile (ClassFile * classfile, FILE* fp) {
 void freeConstantPool(cp_info *cp, byte2 count) {
 	if (!cp) return;
 
-	// Liberar todas as strings UTF8 na constant pool
-	// `readConstantPool` aloca `count * 2` entradas para reservar
-	// espaço extra para CONSTANT_Long e CONSTANT_Double que
-	// ocupam dois slots cada. Usamos o mesmo tamanho de alocação aqui
-	// para evitar ler além do buffer.
-	// Iterar apenas sobre as entradas reais da constant pool (count-1 entradas)
-	// O leitor aloca um buffer maior para simplificar o tratamento de LONG/DOUBLE,
-	// mas apenas as primeiras (count-1) entradas são inicializadas com tags.
+	
+	
+	
+	
+	
+	
+	
+	
 	for (int i = 0; i < (int)(count - 1); i++) {
 		if (cp[i].tag == CONSTANT_Utf8 && cp[i].UnionCP.CONSTANT_UTF8.bytes) {
 			free(cp[i].UnionCP.CONSTANT_UTF8.bytes);
 		}
 	}
 
-	// Free the constant pool array itself
+	
 	free(cp);
 }
 
-// Declarações antecipadas para funções auxiliares de liberação
+
 static void freeAttribute(attribute_info *attr, cp_info *cp, byte2 cp_count);
 static void freeCodeAttribute(code_attribute *code_attr, cp_info *cp, byte2 cp_count);
 static void freeLineNumberTable(line_number_table *lnt);
@@ -1158,13 +1158,13 @@ static void freeVerificationTypeInfo(verification_type_info *vti);
 void freeClassFile(ClassFile *cf) {
 	if (!cf) return;
 
-	// Free interfaces
+	
 	if (cf->interfaces_count > 0 && cf->interfaces) {
 		free(cf->interfaces);
 		cf->interfaces = NULL;
 	}
 
-	// Free fields and their attributes
+	
 	if (cf->fields_count > 0 && cf->fields) {
 		for (int i = 0; i < cf->fields_count; i++) {
 			field_info *f = &cf->fields[i];
@@ -1182,7 +1182,7 @@ void freeClassFile(ClassFile *cf) {
 		cf->fields = NULL;
 	}
 
-	// Free methods and their attributes
+	
 	if (cf->methods_count > 0 && cf->methods) {
 		for (int i = 0; i < cf->methods_count; i++) {
 			method_info *m = &cf->methods[i];
@@ -1200,7 +1200,7 @@ void freeClassFile(ClassFile *cf) {
 		cf->methods = NULL;
 	}
 
-	// Free class attributes
+	
 	if (cf->attributes_count > 0 && cf->attributes) {
 		for (int i = 0; i < cf->attributes_count; i++) {
 			if (cf->attributes[i]) {
@@ -1212,20 +1212,20 @@ void freeClassFile(ClassFile *cf) {
 		cf->attributes = NULL;
 	}
 
-	// Free constant pool (must be after attributes because some frees may reference it)
+	
 	if (cf->constant_pool) {
 		freeConstantPool(cf->constant_pool, cf->constant_pool_count);
 		cf->constant_pool = NULL;
 	}
 
-	// Finally free the ClassFile struct itself
+	
 	free(cf);
 }
 
 static void freeAttribute(attribute_info *attr, cp_info *cp, byte2 cp_count) {
 	if (!attr) return;
 
-	// Determine attribute name (we re-use decodeStringUTF8 which returns malloc'd string)
+	
 	char *name = NULL;
 	if (cp && attr->attribute_name_index > 0 && attr->attribute_name_index <= cp_count) {
 		name = decodeStringUTF8(cp + attr->attribute_name_index - 1);
@@ -1270,13 +1270,13 @@ static void freeAttribute(attribute_info *attr, cp_info *cp, byte2 cp_count) {
 				free(exc);
 			}
 		} else {
-			// Unknown attribute type: free info pointer generically
+			
 			if (attr->info) free(attr->info);
 		}
 
 		free(name);
 	} else {
-		// If we couldn't decode name, try to free generically
+		
 		if (attr->info) free(attr->info);
 	}
 }
@@ -1328,7 +1328,7 @@ static void freeStackMapFrame(stack_map_frame *smf) {
 
 	byte1 ft = smf->frame_type;
 	if (ft >= 64 && ft <= 127) {
-		// same_locals_1_stack_item_frame
+		
 		if (smf->map_frame_type.same_locals_1_stack_item_frame.stack) {
 			verification_type_info **arr = smf->map_frame_type.same_locals_1_stack_item_frame.stack;
 			if (*arr) {
@@ -1343,7 +1343,7 @@ static void freeStackMapFrame(stack_map_frame *smf) {
 			free(arr);
 		}
 	} else if (ft >= 252 && ft <= 254) {
-		// append_frame
+		
 		byte2 sizeMalloc = (ft - 251);
 		if (smf->map_frame_type.append_frame.locals) {
 			verification_type_info **locals = smf->map_frame_type.append_frame.locals;
@@ -1353,7 +1353,7 @@ static void freeStackMapFrame(stack_map_frame *smf) {
 			free(locals);
 		}
 	} else if (ft == 255) {
-		// full_frame
+		
 		if (smf->map_frame_type.full_frame.locals) {
 			for (int i = 0; i < smf->map_frame_type.full_frame.number_of_locals; i++) {
 				if (smf->map_frame_type.full_frame.locals[i]) freeVerificationTypeInfo(smf->map_frame_type.full_frame.locals[i]);
@@ -1371,7 +1371,7 @@ static void freeStackMapFrame(stack_map_frame *smf) {
 
 static void freeVerificationTypeInfo(verification_type_info *vti) {
 	if (!vti) return;
-	// verification_type_info contains no nested heap allocations itself
+	
 	free(vti);
 }
 

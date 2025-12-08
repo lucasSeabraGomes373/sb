@@ -1,23 +1,23 @@
-// inits.c - implementa inicialização de classe e carregamento de dependências
-/*
- * inits.c
- * --------
- * Implementa a rotina que garante a execução dos inicializadores estáticos
- * (`<clinit>`) de uma classe e de suas dependências. Mantém registries
- * simples em memória para evitar executar repetidamente os mesmos
- * inicializadores e para detectar ciclos de dependência.
- *
- * Fluxo resumido de `run_clinit_and_load_deps`:
- * - decodifica o nome da classe atual
- * - marca a classe em 'loading' para evitar ciclos
- * - percorre a constant_pool buscando entradas CONSTANT_Class e tenta
- *   localizar os arquivos `.class` correspondentes no diretório base
- * - para cada dependência encontrada: carrega o ClassFile, chama
- *   recursivamente `run_clinit_and_load_deps` e executa o `<clinit>` se
- *   houver e ainda não estiver inicializada
- * - executa o `<clinit>` da própria classe (se presente) e marca
- *   a classe como inicializada
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -26,7 +26,7 @@
 #include "executorInstrucoes.h"
 #include "frames.h"
 
-// Registro simples de classes que já executaram <clinit>
+
 static char *g_initialized_classes[1024];
 static int g_initialized_count = 0;
 static char *g_loading_classes[1024];
@@ -69,7 +69,7 @@ void run_clinit_and_load_deps(ClassFile *classFile, const char *base_dir) {
     if (!classFile) return;
     if (!base_dir) base_dir = ".";
 
-    // decodificar o nome desta classe
+    
     cp_info *this_entry = classFile->constant_pool + classFile->this_class - 1;
     char *this_name = NULL;
     if (this_entry && this_entry->tag == CONSTANT_Class) {
@@ -79,20 +79,20 @@ void run_clinit_and_load_deps(ClassFile *classFile, const char *base_dir) {
 
     if (is_initialized(this_name)) { free(this_name); return; }
     if (is_loading(this_name)) { free(this_name); return; }
-    // marcar como em carregamento para evitar ciclos
+    
     mark_loading(this_name);
 
-    // Escanear a constant pool por classes referenciadas e tentar carregar arquivos .class de dir_base
+    
     for (int i = 0; i < classFile->constant_pool_count - 1; i++) {
         cp_info *entry = classFile->constant_pool + i;
         if (!entry) continue;
         if (entry->tag == CONSTANT_Class) {
-            // índice é i+1
+            
             char *dep_name = decodeNIeNT(classFile->constant_pool, i+1, 1);
             if (!dep_name) continue;
             if (is_initialized(dep_name) || is_loading(dep_name)) { free(dep_name); continue; }
 
-            // construir caminho candidato
+            
             char dep_path[4096];
             char dep_file[4096];
             strncpy(dep_file, dep_name, sizeof(dep_file)-1); dep_file[sizeof(dep_file)-1]='\0';
@@ -100,7 +100,7 @@ void run_clinit_and_load_deps(ClassFile *classFile, const char *base_dir) {
             size_t bl = strlen(base_dir);
             size_t fl = strlen(dep_file);
             const char *suf = ".class";
-            size_t need = bl + 1 + fl + strlen(suf) + 1; // '/' + null
+            size_t need = bl + 1 + fl + strlen(suf) + 1; 
             if (need <= sizeof(dep_path)) {
                 memcpy(dep_path, base_dir, bl);
                 dep_path[bl] = '/';
@@ -116,10 +116,10 @@ void run_clinit_and_load_deps(ClassFile *classFile, const char *base_dir) {
                 fclose(f);
                 ClassFile *dep_cf = readFile(dep_path);
                 if (dep_cf) {
-                    // garantir recursivamente que o <clinit> das dependências seja executado
+                    
                     run_clinit_and_load_deps(dep_cf, base_dir);
 
-                    // executar o <clinit> da dependência se presente
+                    
                     code_attribute *cl = getMethodCode(dep_cf, "<clinit>", "()V");
                     if (cl && !is_initialized(dep_name)) {
                         inicializarAmbiente(dep_cf);
@@ -149,7 +149,7 @@ void run_clinit_and_load_deps(ClassFile *classFile, const char *base_dir) {
         }
     }
 
-    // Agora executar o <clinit> desta classe, se presente
+    
     code_attribute *this_cl = getMethodCode(classFile, "<clinit>", "()V");
     if (this_cl && !is_initialized(this_name)) {
         inicializarAmbiente(classFile);
